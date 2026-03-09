@@ -1,8 +1,8 @@
 app_name = "nakoda_automation"
 app_title = "Nakoda Automation"
-app_publisher = "Jewellery Automation OCR Verification"
-app_description = "Nakoda Automation"
-app_email = "pranjal@example.com"
+app_publisher = "Nakoda"
+app_description = "Jewelry Automation"
+app_email = "admin@nakoda.local"
 app_license = "mit"
 
 # Apps

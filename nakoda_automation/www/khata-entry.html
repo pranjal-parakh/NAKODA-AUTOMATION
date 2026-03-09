@@ -1,0 +1,556 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div id="app" v-cloak>
+    <div class="migration-container">
+
+        <!-- TOP NAVIGATION -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button class="btn btn-outline-dark btn-sm rounded-0 fw-bold" onclick="window.location.href='/nakoda'">←
+                EXIT TO DASHBOARD</button>
+            <div class="fw-900 border-start border-3 border-dark ps-2">MIGRATION CONSOLE</div>
+        </div>
+
+        <!-- HEADER / ACTIVE CUSTOMER -->
+        <div v-if="activeCustomer" class="monochrome-card active-customer-panel animated fadeIn">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="customer-initials">[[ activeCustomer.customer_name[0].toUpperCase() ]]</div>
+                        <div>
+                            <h2 class="m-0 fw-900">[[ activeCustomer.customer_name ]]</h2>
+                            <span class="text-secondary small">📍 [[ activeCustomer.village || '-' ]] | 📞 [[
+                                activeCustomer.phone || '-' ]]</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="outstanding-label">Outstanding Balance</div>
+                    <div class="outstanding-value">₹ [[ formatMoney(activeCustomer.outstanding) ]]</div>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-dark btn-sm rounded-0" @click="changeCustomer">CHANGE CUSTOMER (Esc)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- MAIN ENTRY AREA -->
+            <div :class="activeCustomer ? 'col-md-8' : 'col-md-6 offset-md-3'">
+
+                <!-- SECTION 1: SEARCH / CREATE CUSTOMER -->
+                <div v-if="!activeCustomer" class="monochrome-card main-card">
+                    <h3 class="text-center mb-5 fw-900 border-bottom pb-3">KHATA MIGRATION</h3>
+
+                    <form @submit.prevent="createCustomer" class="row g-4">
+                        <div class="col-12 position-relative">
+                            <label class="form-label fw-bold">1. CUSTOMER NAME</label>
+                            <input type="text" class="form-control mono-input h-large" v-model="newCustomer.name"
+                                @input="debouncedSearch" placeholder="Type name to find or create..." autocomplete="off"
+                                required>
+
+                            <!-- Suggestions List -->
+                            <div v-if="searchResults.length > 0" class="suggestions-dropdown">
+                                <div class="suggestion-header">EXISTING CUSTOMERS:</div>
+                                <div v-for="res in searchResults" :key="res.name" class="suggestion-item"
+                                    @click="selectCustomer(res)">
+                                    <div class="fw-bold">[[ res.customer_name ]]</div>
+                                    <div class="small opacity-50">[[ res.village ]] | [[ res.phone ]]</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">2. PHONE NUMBER</label>
+                            <input type="text" class="form-control mono-input h-large" v-model="newCustomer.phone"
+                                placeholder="Mobile">
+                        </div>
+
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label fw-bold">3. VILLAGE</label>
+                            <input type="text" class="form-control mono-input h-large" v-model="newCustomer.village"
+                                @input="filterVillages" @focus="filterVillages" placeholder="Search/Type Village"
+                                autocomplete="off">
+
+                            <!-- Village Suggestions -->
+                            <div v-if="villageSuggestions.length > 0" class="suggestions-dropdown">
+                                <div class="suggestion-header">SELECT VILLAGE:</div>
+                                <div v-for="v in villageSuggestions" :key="v" class="suggestion-item"
+                                    @click="selectVillage(v)">
+                                    <div class="fw-bold">[[ v ]]</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-5">
+                            <button type="submit" class="btn btn-black w-100 py-3 fw-bold rounded-0"
+                                :disabled="loading">
+                                [[ loading ? 'PROCESSING...' : 'START RECORDING TRANSACTIONS' ]]
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- SECTION 2: TRANSACTION ENTRY -->
+                <div v-if="activeCustomer" class="monochrome-card main-card animated slideInUp">
+                    <div class="d-flex justify-content-between align-items-center mb-5 border-bottom pb-3">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-dark btn-sm rounded-0 me-3" @click="changeCustomer">← BACK</button>
+                            <h4 class="m-0 fw-900">ADD ENTRY</h4>
+                        </div>
+                        <div class="hint-labels">
+                            <span class="mono-badge">T: TYPE</span>
+                            <span class="mono-badge">U: UDHAARI</span>
+                            <span class="mono-badge">J: JAMA</span>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="submitTransaction" class="row g-4 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">TYPE</label>
+                            <select class="form-select mono-input h-large fw-bold" v-model="tx.type">
+                                <option value="Udhaari">UDHAARI [DR]</option>
+                                <option value="Jama">JAMA [CR]</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">DATE</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control mono-input h-large" v-model="tx.date">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">AMOUNT</label>
+                            <div class="input-group h-large">
+                                <span class="input-group-text bg-white border-end-0 fw-bold">₹</span>
+                                <input type="text" class="form-control border-start-0 mono-input h-large amount-input"
+                                    v-model="tx.amount" placeholder="0.00" ref="amountInput" autocomplete="off"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-black w-100 h-large fw-bold rounded-0"
+                                :disabled="loading">
+                                [[ loading ? '...' : 'ADD' ]]
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-4 opacity-50 small fw-bold">
+                        HINT: PRESS ENTER TO SUBMIT • TYPE '12k' FOR 12,000
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: RECENT TRANSACTIONS -->
+            <div v-if="activeCustomer" class="col-md-4">
+                <div class="monochrome-card side-panel p-0 overflow-hidden">
+                    <div class="p-3 border-bottom bg-light fw-bold small">HISTORY [LAST 10 ENTRIES]</div>
+                    <div v-if="transactions.length === 0" class="p-5 text-center opacity-50 small italic">
+                        No transactions recorded for this customer.
+                    </div>
+                    <div v-else class="tx-list-mono">
+                        <div v-for="t in transactions" :key="t.id" class="tx-item-mono" :class="t.type.toLowerCase()">
+                            <div class="d-flex justify-content-between">
+                                <span class="tx-date-mono">[[ formatDate(t.date) ]]</span>
+                                <span class="tx-amount-mono">₹[[ formatMoney(t.amount) ]]</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-1">
+                                <span class="tx-id-mono">[[ t.id ]]</span>
+                                <span class="tx-type-mono">[[ t.type.toUpperCase() ]]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* MONOCHROME DESIGN SYSTEM */
+    html,
+    body {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        font-family: 'Inter', -apple-system, sans-serif;
+        text-transform: uppercase;
+        /* Sharp POS feel */
+    }
+
+    .migration-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .fw-900 {
+        font-weight: 900;
+    }
+
+    .monochrome-card {
+        background: #ffffff;
+        border: 2px solid #000;
+        box-shadow: 8px 8px 0px #000;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .main-card {
+        min-height: 450px;
+    }
+
+    .mono-input {
+        background: #fff !important;
+        border: 2px solid #000 !important;
+        color: #000 !important;
+        border-radius: 0 !important;
+        font-weight: 600 !important;
+    }
+
+    .mono-input:focus {
+        background: #fff !important;
+        border-color: #000 !important;
+        box-shadow: 4px 4px 0px #000 !important;
+        outline: none;
+    }
+
+    .btn-black {
+        background: #000 !important;
+        border: 2px solid #000 !important;
+        color: #fff !important;
+        border-radius: 0 !important;
+        transition: 0.1s;
+    }
+
+    .btn-black:hover {
+        background: #333 !important;
+        color: #fff !important;
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 #000;
+    }
+
+    .h-large {
+        height: 60px !important;
+    }
+
+    .amount-input {
+        font-size: 1.8rem !important;
+        letter-spacing: -1px;
+    }
+
+    .active-customer-panel {
+        background: #000;
+        color: #fff;
+        border: none;
+        box-shadow: 8px 8px 0px #ccc;
+    }
+
+    .active-customer-panel h2 {
+        color: #fff !important;
+    }
+
+    .active-customer-panel .text-secondary {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    .active-customer-panel .outstanding-value {
+        color: #fff;
+        text-shadow: 2px 2px 0px #ff0000;
+    }
+
+    .customer-initials {
+        width: 60px;
+        height: 60px;
+        border: 2px solid #fff;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 900;
+        margin-right: 20px;
+    }
+
+    /* Suggestions Dropdown */
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 2px solid #000;
+        z-index: 1000;
+        box-shadow: 10px 10px 0 #000;
+    }
+
+    .suggestion-header {
+        background: #000;
+        color: #fff;
+        padding: 5px 15px;
+        font-size: 0.7rem;
+        font-weight: 900;
+    }
+
+    .suggestion-item {
+        padding: 12px 15px;
+        border-bottom: 2px solid #eee;
+        cursor: pointer;
+    }
+
+    .suggestion-item:hover {
+        background: #000;
+        color: #fff;
+    }
+
+    /* Transaction List Mono */
+    .tx-list-mono {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .tx-item-mono {
+        padding: 15px;
+        border-bottom: 1px solid #000;
+        position: relative;
+    }
+
+    .tx-item-mono:hover {
+        background: #f0f0f0;
+    }
+
+    .tx-item-mono.udhaari {
+        border-left: 8px solid #000;
+    }
+
+    .tx-item-mono.jama {
+        border-left: 8px solid #ccc;
+    }
+
+    .tx-date-mono {
+        font-weight: 900;
+        font-size: 0.85rem;
+    }
+
+    .tx-amount-mono {
+        font-weight: 900;
+        font-size: 1.1rem;
+    }
+
+    .tx-id-mono {
+        font-size: 0.65rem;
+        opacity: 0.6;
+    }
+
+    .tx-type-mono {
+        font-size: 0.65rem;
+        font-weight: 900;
+        background: #000;
+        color: #fff;
+        padding: 1px 4px;
+    }
+
+    .mono-badge {
+        background: #000;
+        color: #fff;
+        padding: 2px 6px;
+        font-size: 0.7rem;
+        font-weight: 900;
+        margin-left: 5px;
+    }
+
+    [v-cloak] {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block script %}
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp, ref, onMounted, nextTick } = Vue;
+
+    frappe.ready(() => {
+        createApp({
+            delimiters: ['[[', ']]'],
+            setup() {
+                const loading = ref(false);
+                const activeCustomer = ref(null);
+                const searchQuery = ref('');
+                const searchResults = ref([]);
+                const transactions = ref([]);
+                const villages = ref([]);
+                const villageSuggestions = ref([]);
+
+                const newCustomer = ref({ name: '', phone: '', village: '' });
+                const tx = ref({ type: 'Udhaari', date: new Date().toISOString().split('T')[0], amount: '' });
+
+                const amountInput = ref(null);
+
+                // API CALLS
+                const callAPI = (method, args = {}) => {
+                    return new Promise((resolve, reject) => {
+                        loading.value = true;
+                        frappe.call({
+                            method: 'nakoda_automation.khata_api.' + method,
+                            args: args,
+                            callback: (r) => {
+                                loading.value = false;
+                                if (r.exc) {
+                                    frappe.show_alert({ message: r.exc, indicator: 'red' });
+                                    reject(r.exc);
+                                } else {
+                                    resolve(r.message);
+                                }
+                            }
+                        });
+                    });
+                };
+
+                const loadVillages = async () => {
+                    villages.value = await callAPI('get_villages');
+                };
+
+                const createCustomer = async () => {
+                    try {
+                        const res = await callAPI('create_customer', newCustomer.value);
+                        activeCustomer.value = res;
+                        history.pushState({ view: 'entry', customer: res.name }, '');
+                        await refreshTransactions();
+                        focusAmount();
+                    } catch (e) { }
+                };
+
+                const debouncedSearch = () => {
+                    if (newCustomer.value.name.length < 2) {
+                        searchResults.value = [];
+                        return;
+                    }
+                    clearTimeout(window.searchTimeout);
+                    window.searchTimeout = setTimeout(async () => {
+                        const res = await callAPI('search_customer', { query: newCustomer.value.name });
+                        searchResults.value = res;
+                    }, 200);
+                };
+
+                const filterVillages = () => {
+                    if (!Array.isArray(villages.value)) return;
+                    if (!newCustomer.value.village) {
+                        villageSuggestions.value = villages.value.slice(0, 10);
+                        return;
+                    }
+                    const q = newCustomer.value.village.toLowerCase();
+                    villageSuggestions.value = villages.value
+                        .filter(v => v.toLowerCase().includes(q))
+                        .slice(0, 5);
+                };
+
+                const selectVillage = (v) => {
+                    newCustomer.value.village = v;
+                    villageSuggestions.value = [];
+                };
+
+                const selectCustomer = async (cust, skipHistory = false) => {
+                    const fullInfo = await callAPI('get_customer_info', { customer_name: (cust.name || cust) });
+                    activeCustomer.value = fullInfo;
+                    searchResults.value = [];
+                    newCustomer.value = { name: '', phone: '', village: '' };
+                    if (!skipHistory) history.pushState({ view: 'entry', customer: activeCustomer.value.name }, '');
+                    await refreshTransactions();
+                    focusAmount();
+                };
+
+                const changeCustomer = (skipHistory = false) => {
+                    activeCustomer.value = null;
+                    transactions.value = [];
+                    if (!skipHistory) history.pushState({ view: 'selection' }, '');
+                    nextTick(() => {
+                        const el = document.querySelector('input[placeholder="Type name to find or create..."]');
+                        if (el) el.focus();
+                    });
+                };
+
+                const submitTransaction = async () => {
+                    if (!tx.value.amount) return;
+
+                    try {
+                        const method = tx.value.type === 'Udhaari' ? 'create_udhaari_transaction' : 'create_jama_transaction';
+                        await callAPI(method, {
+                            customer: activeCustomer.value.name,
+                            date: tx.value.date || today(),
+                            amount: tx.value.amount
+                        });
+
+                        frappe.show_alert({ message: 'OK: RECORDED', indicator: 'green' });
+                        tx.value.amount = '';
+
+                        // Refresh data
+                        const fullInfo = await callAPI('get_customer_info', { customer_name: activeCustomer.value.name });
+                        activeCustomer.value = fullInfo;
+                        await refreshTransactions();
+                        focusAmount();
+                    } catch (e) { }
+                };
+
+                const refreshTransactions = async () => {
+                    const res = await callAPI('get_customer_transactions', { customer: activeCustomer.value.name });
+                    transactions.value = res;
+                };
+
+                const formatMoney = (amt) => Number(amt || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+                const formatDate = (ds) => {
+                    if (!ds) return '';
+                    const d = new Date(ds);
+                    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                };
+
+                const focusAmount = () => {
+                    nextTick(() => {
+                        if (amountInput.value) amountInput.value.focus();
+                    });
+                };
+
+                onMounted(() => {
+                    loadVillages();
+
+                    // Handle State
+                    history.replaceState({ view: 'selection' }, '');
+                    window.addEventListener('popstate', (e) => {
+                        if (e.state) {
+                            if (e.state.view === 'selection') changeCustomer(true);
+                            else if (e.state.view === 'entry') selectCustomer(e.state.customer, true);
+                        }
+                    });
+
+                    window.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') {
+                            if (activeCustomer.value) changeCustomer();
+                        }
+
+                        if (!activeCustomer.value) return;
+
+                        // Keyboard Shortcuts
+                        const activeTag = document.activeElement.tagName;
+                        if (activeTag !== 'INPUT' || document.activeElement.classList.contains('amount-input')) {
+                            if (e.key.toLowerCase() === 'u') {
+                                tx.value.type = 'Udhaari';
+                                e.preventDefault();
+                            } else if (e.key.toLowerCase() === 'j') {
+                                tx.value.type = 'Jama';
+                                e.preventDefault();
+                            }
+                        }
+                    });
+                });
+
+                return {
+                    loading, activeCustomer, searchResults, transactions, newCustomer, tx, villages,
+                    villageSuggestions, filterVillages, selectVillage,
+                    createCustomer, debouncedSearch, selectCustomer, changeCustomer, submitTransaction,
+                    formatMoney, formatDate, amountInput, loadVillages
+                };
+            }
+        }).mount('#app');
+    });
+</script>
+{% endblock %}

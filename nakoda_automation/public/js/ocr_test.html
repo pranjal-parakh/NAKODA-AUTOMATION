@@ -1,0 +1,94 @@
+<div class="ocr-test-container p-4">
+    <div class="header mb-4 d-flex justify-content-between align-items-center">
+        <h3 class="m-0">💎 Surya OCR Verification</h3>
+        <div id="installation-status" class="indicator-pill gray">Checking status...</div>
+    </div>
+
+    <div class="card mb-4 shadow-sm border-0" style="border-radius: 12px; background: var(--bg-color);">
+        <div class="card-body">
+            <div class="upload-section text-center p-5 border-dashed" id="drop-zone"
+                style="border: 2px dashed var(--border-color); border-radius: 8px;">
+                <i class="fa fa-cloud-upload fa-3x mb-3 text-muted"></i>
+                <p class="text-muted">Upload an image of a ledger page (.jpg, .jpeg, .png)</p>
+                <div id="file-uploader"></div>
+            </div>
+
+            <div class="actions-section mt-4 text-right">
+                <button class="btn btn-primary btn-lg" id="btn-run-ocr" disabled>
+                    <i class="fa fa-play mr-2"></i> Run Surya OCR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-section d-none" id="results-area">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm border-0 h-100" style="border-radius: 12px;">
+                    <div class="card-header bg-light font-weight-bold">
+                        <i class="fa fa-file-text-o mr-2"></i> Raw Hindi Text
+                    </div>
+                    <div class="card-body p-0">
+                        <textarea id="raw-text-output" class="form-control border-0" rows="15" readonly
+                            style="font-family: 'Courier New', Courier, monospace; resize: none; border-radius: 0 0 12px 12px;"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm border-0 h-100" style="border-radius: 12px;">
+                    <div
+                        class="card-header bg-light font-weight-bold d-flex justify-content-between align-items-center">
+                        <span><i class="fa fa-code mr-2"></i> JSON Blocks</span>
+                        <span id="time-taken-badge" class="badge badge-info p-2">Time: 0s</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre id="json-block-output" class="m-0 p-3 bg-dark text-light"
+                            style="max-height: 400px; overflow-y: auto; font-size: 12px; border-radius: 0 0 12px 12px;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-message" class="alert alert-danger d-none mt-4"></div>
+</div>
+
+<style>
+    .ocr-test-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .indicator-pill {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .indicator-pill.green {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .indicator-pill.red {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .indicator-pill.gray {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+    .border-dashed:hover {
+        background-color: var(--bg-light-gray);
+        cursor: pointer;
+    }
+
+    pre#json-block-output {
+        scrollbar-width: thin;
+        scrollbar-color: #444 #222;
+    }
+</style>

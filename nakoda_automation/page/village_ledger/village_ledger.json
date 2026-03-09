@@ -1,0 +1,23 @@
+{
+    "content": "<h1>Village Ledger Loading...</h1>",
+    "creation": "2026-03-05 18:30:00.000000",
+    "docstatus": 0,
+    "doctype": "Page",
+    "idx": 0,
+    "modified": "2026-03-05 18:30:00.000000",
+    "modified_by": "Administrator",
+    "module": "Nakoda Automation",
+    "name": "village_ledger",
+    "owner": "Administrator",
+    "page_name": "village_ledger",
+    "roles": [
+        {
+            "role": "Nakoda Owner"
+        },
+        {
+            "role": "System Manager"
+        }
+    ],
+    "standard": "Yes",
+    "title": "Village Ledger"
+}

@@ -1,6 +1,6 @@
 ### Nakoda Automation
 
-Nakoda Automation
+Jewelry Automation
 
 ### Installation
 

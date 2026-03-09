@@ -1,0 +1,19 @@
+{
+ "content": null,
+ "creation": "2026-03-01 15:17:30.566226",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-03-01 15:17:30.566226",
+ "modified_by": "Administrator",
+ "module": "Nakoda Automation",
+ "name": "ocr-test",
+ "owner": "Administrator",
+ "page_name": "ocr-test",
+ "roles": [],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "OCR Test"
+}

@@ -1,9 +1,9 @@
 [project]
 name = "nakoda_automation"
 authors = [
-    { name = "Jewellery Automation OCR Verification", email = "pranjal@example.com"}
+    { name = "Nakoda", email = "admin@nakoda.local"}
 ]
-description = "Nakoda Automation"
+description = "Jewelry Automation"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
