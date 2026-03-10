@@ -576,6 +576,11 @@
 
         <div class="row mt-4">
             <div class="col-md-7">
+                <div class="glass-card mb-3">
+                    <div class="metric-label mb-3">Active Invoices (Outstanding)</div>
+                    <div id="invoice-list"></div>
+                    <div id="invoice-actions" class="text-center mt-2"></div>
+                </div>
                 <div class="glass-card">
                     <div class="metric-label mb-4">Repayment Timeline</div>
                     <div class="timeline-container" id="timeline-list"></div>
@@ -584,12 +589,22 @@
             </div>
             <div class="col-md-5">
                 <div class="glass-card">
-                    <div class="metric-label mb-3">Active Invoices (Outstanding)</div>
-                    <div id="invoice-list"></div>
-                    <div id="invoice-actions" class="text-center mt-2"></div>
-                </div>
-                <div class="glass-card mt-3">
-                    <div class="metric-label mb-3">Customer Repayment Pattern</div>
+                    <div class="metric-label mb-3">Customer Repayment Ledger</div>
+                    <div class="" style="overflow-x: auto;">
+                        <table class="dashboard-table" style="font-size: 0.75rem; margin-top: 5px;" id="ledger-table">
+                            <thead>
+                                <tr style="background: transparent;">
+                                    <th style="padding: 8px;">दिनांक (Date)</th>
+                                    <th style="padding: 8px;">जमा (+)</th>
+                                    <th style="padding: 8px;">उधार (-)</th>
+                                    <th style="padding: 8px;">बकाया</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="metric-label mt-4 mb-3">Repayment Pattern Trend</div>
                     <div style="height: 250px;"><canvas id="repaymentChart"></canvas></div>
                 </div>
             </div>
@@ -995,46 +1010,52 @@
 
             // Calculate running balances for the whole ledger
             let runningBal = 0;
+            const tableBody = $('#ledger-table tbody');
+            tableBody.empty();
+
             this.fullLedger.forEach(item => {
                 // Jama (+) adds to balance, Udhaari (-) subtracts (Debt is negative)
                 runningBal += (item.type === 'Jama' ? item.amount : -item.amount);
                 item.runningBalance = runningBal;
+
+                const credit = item.type === 'Jama' ? `+ ₹ ${this.formatMoney(item.amount)}` : '-';
+                const debit = item.type === 'Udhaari' ? `- ₹ ${this.formatMoney(item.amount)}` : '-';
+                const creditColor = item.type === 'Jama' ? 'color: #2ecc71; font-weight: 700;' : 'opacity: 0.3;';
+                const debitColor = item.type === 'Udhaari' ? 'color: #e74c3c; font-weight: 700;' : 'opacity: 0.3;';
+
+                tableBody.prepend(`
+                    <tr style="background: transparent; border-bottom: 1px solid var(--border-light);">
+                        <td style="padding: 8px;">${this.formatDate(item.posting_date)}</td>
+                        <td style="padding: 8px; ${creditColor}">${credit}</td>
+                        <td style="padding: 8px; ${debitColor}">${debit}</td>
+                        <td style="padding: 8px; font-weight: 800; color: var(--text-bright);">₹ ${this.formatMoney(Math.abs(runningBal))}</td>
+                    </tr>
+                `);
             });
 
-            // Show last N transactions
-            const total = this.fullLedger.length;
-            const toShow = this.fullLedger.slice(Math.max(0, total - this.timelineLimit));
-
-            toShow.forEach(item => {
+            // Render all transactions oldest to newest
+            this.fullLedger.forEach(item => {
                 const cClass = item.type === 'Jama' ? 'item-jama' : 'item-udhaari';
+                const cLabel = item.type === 'Jama' ? 'जमा' : 'उधार';
                 const cColor = item.type === 'Jama' ? '#2ecc71' : '#e74c3c';
                 const symbol = item.type === 'Jama' ? '+' : '-';
                 list.append(`
-                    <div class="timeline-item ${cClass}">
-                        <div class="timeline-date">${this.formatDate(item.posting_date)}</div>
-                        <div class="timeline-content">
+                    <div class="timeline-item ${cClass}" style="margin-bottom: 8px;">
+                        <div class="timeline-date" style="margin-bottom: 0;">${this.formatDate(item.posting_date)}</div>
+                        <div class="timeline-content" style="padding: 6px 12px;">
                             <div style="flex: 1;">
-                                <div style="font-weight: 700; font-size: 0.85rem;">
-                                    ${item.type} <span style="font-size: 0.65rem; font-weight: 400; opacity: 0.5;">#${item.id.split('-').pop()}</span>
+                                <div style="font-weight: 700; font-size: 0.8rem;">
+                                    ${cLabel} <span style="font-size: 0.65rem; font-weight: 400; opacity: 0.5;">#${item.id.split('-').pop()}</span>
                                 </div>
-                                <div style="font-size: 0.75rem; opacity: 0.8;">बकाया: ₹ ${this.formatMoney(Math.abs(item.runningBalance))}</div>
+                                <div style="font-size: 0.7rem; opacity: 0.8;">बकाया: ₹ ${this.formatMoney(Math.abs(item.runningBalance))}</div>
                             </div>
-                            <div style="font-size: 1rem; font-weight: 800; color: ${cColor}">
+                            <div style="font-size: 0.9rem; font-weight: 800; color: ${cColor}">
                                 ${symbol} ₹ ${this.formatMoney(item.amount)}
                             </div>
                         </div>
                     </div>
                 `);
             });
-
-            if (this.timelineLimit < total) {
-                const btn = $(`<button class="btn-glass w-100">See More (${total - this.timelineLimit} hidden)</button>`);
-                btn.click(() => {
-                    this.timelineLimit += 5;
-                    this.renderTimelineUI();
-                });
-                actions.append(btn);
-            }
         },
 
         renderInvoiceUI: function () {

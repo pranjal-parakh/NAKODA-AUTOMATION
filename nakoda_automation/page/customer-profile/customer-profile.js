@@ -118,8 +118,14 @@ class CustomerProfile {
 				</div>
 
                 <div class="row">
-                    <!-- Left: Timeline -->
+                    <!-- Left: Main Section -->
                     <div class="col-md-7">
+                        <div class="glass-card-dark" style="margin-bottom: 20px;">
+                            <div class="stat-label" style="margin-bottom: 20px;">Active Invoices</div>
+                            <div id="invoice-list"></div>
+                            <div id="invoice-actions" class="text-center mt-2"></div>
+                        </div>
+
                         <div class="glass-card-dark">
                             <div class="stat-label" style="margin-bottom: 20px;">Repayment Timeline</div>
                             <div class="timeline-container" id="timeline-list">
@@ -129,16 +135,25 @@ class CustomerProfile {
                         </div>
                     </div>
 
-                    <!-- Right: Details -->
+                    <!-- Right: Analysis Section -->
                     <div class="col-md-5">
                         <div class="glass-card-dark">
-                            <div class="stat-label" style="margin-bottom: 20px;">Active Invoices</div>
-                            <div id="invoice-list"></div>
-                            <div id="invoice-actions" class="text-center mt-2"></div>
-                        </div>
-                        
-                        <div class="glass-card-dark">
-                            <div class="stat-label" style="margin-bottom: 20px;">Analytics</div>
+                            <div class="stat-label" style="margin-bottom: 10px;">Transaction Ledger</div>
+                            <div class="" style="overflow-x: auto;">
+                                <table class="table table-sm" style="font-size: 0.75rem; margin-top: 10px; color: #4a5568;" id="ledger-table">
+                                    <thead>
+                                        <tr style="background: #f7fafc;">
+                                            <th>दिनांक</th>
+                                            <th>जमा (+)</th>
+                                            <th>उधार (-)</th>
+                                            <th>बकाया</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <div class="stat-label" style="margin-top: 25px; margin-bottom: 15px;">Pattern Trend</div>
                             <div style="height: 200px;"><canvas id="repaymentChart"></canvas></div>
                         </div>
                     </div>
@@ -192,33 +207,47 @@ class CustomerProfile {
         list.empty();
         actions.empty();
 
-        // Pre-calculate running balances
+        // 1. Fill Ledger Table
         let runningBal = 0;
+        const tableBody = $('#ledger-table tbody');
+        tableBody.empty();
+
         this.fullLedger.forEach(item => {
             // Jama (+) adds to balance, Udhaari (-) subtracts (Debt is negative)
             runningBal += (item.type === 'Jama' ? item.amount : -item.amount);
             item.runningBalance = runningBal;
-        });
 
-        const total = this.fullLedger.length;
-        const toShow = this.fullLedger.slice(Math.max(0, total - this.timelineLimit));
+            const credit = item.type === 'Jama' ? `+ ₹ ${format_currency(item.amount)}` : '-';
+            const debit = item.type === 'Udhaari' ? `- ₹ ${format_currency(item.amount)}` : '-';
+            const creditColor = item.type === 'Jama' ? 'color: #38a169; font-weight: 700;' : 'opacity: 0.3;';
+            const debitColor = item.type === 'Udhaari' ? 'color: #e53e3e; font-weight: 700;' : 'opacity: 0.3;';
 
-        toShow.forEach(item => {
+            tableBody.prepend(`
+                <tr>
+                    <td>${frappe.datetime.str_to_user(item.posting_date)}</td>
+                    <td style="${creditColor}">${credit}</td>
+                    <td style="${debitColor}">${debit}</td>
+                    <td style="font-weight: 800; color: #2d3748;">₹ ${format_currency(Math.abs(runningBal))}</td>
+                </tr>
+            `);
+
+            // 2. Fill Timeline UI (Compact & chronological oldest to newest)
             const typeClass = item.type === 'Jama' ? 'item-jama' : 'item-udhaari';
+            const typeLabel = item.type === 'Jama' ? 'जमा' : 'उधार';
             const amountColor = item.type === 'Jama' ? '#38a169' : '#e53e3e';
             const symbol = item.type === 'Jama' ? '+' : '-';
 
             list.append(`
-                <div class="timeline-item ${typeClass}">
-                    <div class="timeline-date">${frappe.datetime.str_to_user(item.posting_date)}</div>
-                    <div class="timeline-content">
+                <div class="timeline-item ${typeClass}" style="margin-bottom: 8px;">
+                    <div class="timeline-date" style="margin-bottom: 0;">${frappe.datetime.str_to_user(item.posting_date)}</div>
+                    <div class="timeline-content" style="padding: 6px 12px;">
                         <div style="flex: 1;">
-                            <div style="font-weight: 700; font-size: 0.85rem;">
-                                ${item.type} <span style="font-size: 0.65rem; font-weight: 400; opacity: 0.5;">#${item.id.split('-').pop()}</span>
+                            <div style="font-weight: 700; font-size: 0.8rem;">
+                                ${typeLabel} <span style="font-size: 0.65rem; font-weight: 400; opacity: 0.5;">#${item.id.split('-').pop()}</span>
                             </div>
-                            <div style="font-size: 0.75rem; color: #718096">बकाया: ₹ ${format_currency(Math.abs(item.runningBalance))}</div>
+                            <div style="font-size: 0.7rem; color: #718096">बकाया: ₹ ${format_currency(Math.abs(item.runningBalance))}</div>
                         </div>
-                        <div style="font-size: 1rem; font-weight: 800; color: ${amountColor}">
+                        <div style="font-size: 0.9rem; font-weight: 800; color: ${amountColor}">
                             ${symbol} ₹ ${format_currency(item.amount)}
                         </div>
                     </div>
@@ -226,14 +255,6 @@ class CustomerProfile {
             `);
         });
 
-        if (this.timelineLimit < total) {
-            const btn = $(`<button class="btn btn-default btn-xs w-100">See More (${total - this.timelineLimit} hidden)</button>`);
-            btn.click(() => {
-                this.timelineLimit += 5;
-                this.render_timeline_ui();
-            });
-            actions.append(btn);
-        }
         this.render_analytics(this.fullLedger);
     }
 
