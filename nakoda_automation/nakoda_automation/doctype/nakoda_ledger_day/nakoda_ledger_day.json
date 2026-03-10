@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-02 06:33:38.509907",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "ledger_date",
+  "excel_file",
+  "total_udhaari",
+  "total_jama",
+  "pending_amount",
+  "rows_processed",
+  "rows_failed",
+  "ledger_rows",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "ledger_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "excel_file",
+   "fieldtype": "Attach",
+   "label": "Excel File"
+  },
+  {
+   "fieldname": "total_udhaari",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Udhaari"
+  },
+  {
+   "fieldname": "total_jama",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Jama"
+  },
+  {
+   "fieldname": "pending_amount",
+   "fieldtype": "Currency",
+   "label": "Pending Amount"
+  },
+  {
+   "fieldname": "rows_processed",
+   "fieldtype": "Int",
+   "label": "Rows Processed"
+  },
+  {
+   "fieldname": "rows_failed",
+   "fieldtype": "Int",
+   "label": "Rows Failed"
+  },
+  {
+   "fieldname": "ledger_rows",
+   "fieldtype": "Table",
+   "label": "Ledger Rows",
+   "options": "Nakoda Ledger Row"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Nakoda Ledger Day",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-03-10 19:34:50.813635",
+ "modified_by": "Administrator",
+ "module": "Nakoda Automation",
+ "name": "Nakoda Ledger Day",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

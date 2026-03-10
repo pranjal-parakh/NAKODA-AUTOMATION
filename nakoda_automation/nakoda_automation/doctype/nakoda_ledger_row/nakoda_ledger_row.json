@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-03-02 06:33:38.054505",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "transaction_type",
+  "row_reference",
+  "customer_name_raw",
+  "customer",
+  "amount",
+  "status",
+  "message",
+  "village",
+  "tenure_months"
+ ],
+ "fields": [
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Transaction Type",
+   "options": "Udhaari\nJama\n\u0909\u0927\u093e\u0930\u0940\n\u091c\u092e\u093e"
+  },
+  {
+   "fieldname": "row_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Row Reference"
+  },
+  {
+   "fieldname": "customer_name_raw",
+   "fieldtype": "Data",
+   "label": "Raw Name"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending\nPosted\nFailed\nDuplicate\nSkipped"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Message"
+  },
+  {
+   "columns": 2,
+   "fieldname": "village",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Village",
+   "options": "Village"
+  },
+  {
+   "columns": 1,
+   "fieldname": "tenure_months",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Tenure (Months)"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-10 19:35:49.588527",
+ "modified_by": "Administrator",
+ "module": "Nakoda Automation",
+ "name": "Nakoda Ledger Row",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

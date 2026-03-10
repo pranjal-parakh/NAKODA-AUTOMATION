@@ -5,6 +5,11 @@ app_description = "Jewelry Automation"
 app_email = "admin@nakoda.local"
 app_license = "mit"
 
+fixtures = [
+    "Custom Field",
+    "Property Setter",
+    "Client Script"
+]
 # Apps
 # ------------------
 
