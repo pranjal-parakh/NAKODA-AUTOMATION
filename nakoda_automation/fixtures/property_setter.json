@@ -1639,7 +1639,7 @@
   "doctype_or_field": "DocField",
   "field_name": "customer_name",
   "is_system_generated": 1,
-  "modified": "2026-03-05 18:05:16.606185",
+  "modified": "2026-03-16 13:29:01.232461",
   "module": null,
   "name": "Customer-customer_name-in_list_view",
   "property": "in_list_view",
@@ -1655,13 +1655,13 @@
   "doctype_or_field": "DocField",
   "field_name": "mobile_no",
   "is_system_generated": 1,
-  "modified": "2026-03-05 18:00:40.898246",
+  "modified": "2026-03-16 13:29:01.319554",
   "module": null,
   "name": "Customer-mobile_no-in_list_view",
   "property": "in_list_view",
   "property_type": "Check",
   "row_name": null,
-  "value": "0"
+  "value": "1"
  },
  {
   "default_value": null,
@@ -1703,7 +1703,7 @@
   "doctype_or_field": "DocField",
   "field_name": "custom_village",
   "is_system_generated": 1,
-  "modified": "2026-03-05 18:05:16.645646",
+  "modified": "2026-03-16 13:29:01.307194",
   "module": null,
   "name": "Customer-custom_village-in_list_view",
   "property": "in_list_view",
