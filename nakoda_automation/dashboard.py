@@ -53,13 +53,13 @@ def get_village_exposure():
     """Village-wise outstanding distribution."""
     return frappe.db.sql("""
         SELECT 
-            c.custom_village as village, 
+            c.local_address as village, 
             SUM(gle.debit - gle.credit) as outstanding,
             COUNT(DISTINCT gle.party) as customer_count
         FROM `tabGL Entry` gle
         JOIN `tabCustomer` c ON gle.party = c.name
         WHERE gle.party_type = 'Customer' AND gle.is_cancelled = 0
-        GROUP BY c.custom_village
+        GROUP BY c.local_address
         HAVING outstanding > 0
         ORDER BY outstanding DESC
     """, as_dict=1)
@@ -130,8 +130,10 @@ def get_customer_profile(customer_name):
         "info": {
             "name": customer.name,
             "customer_name": customer.customer_name,
-            "village": customer.custom_village,
-            "phone": customer.mobile_no
+            "village": customer.local_address,
+            "phone": customer.mobile_no,
+            "reference_name": customer.reference_name,
+            "local_address": customer.local_address
         },
         "metrics": finance
     }
@@ -172,9 +174,9 @@ def get_customer_payments(customer_name):
 def search_customers(query):
     """Global search for dashboard."""
     return frappe.db.sql("""
-        SELECT name, customer_name, custom_village, mobile_no
+        SELECT name, customer_name, local_address, mobile_no
         FROM `tabCustomer`
-        WHERE (name LIKE %s OR customer_name LIKE %s OR custom_village LIKE %s OR mobile_no LIKE %s)
+        WHERE (name LIKE %s OR customer_name LIKE %s OR local_address LIKE %s OR mobile_no LIKE %s)
         AND disabled = 0
         LIMIT 10
     """, (f"%{query}%", f"%{query}%", f"%{query}%", f"%{query}%"), as_dict=1)
@@ -190,7 +192,7 @@ def get_village_ledger(village):
             SUM(si.grand_total) as total_borrowed
         FROM `tabCustomer` c
         LEFT JOIN `tabSales Invoice` si ON c.name = si.customer AND si.docstatus = 1
-        WHERE c.custom_village = %s
+        WHERE c.local_address = %s
         GROUP BY c.name
         ORDER BY outstanding DESC
     """, (village,), as_dict=1)
@@ -212,7 +214,7 @@ def get_all_customers():
         SELECT 
             c.name,
             c.customer_name,
-            c.custom_village as village,
+            c.local_address as village,
             c.mobile_no as phone,
             (SELECT COALESCE(SUM(debit - credit), 0) FROM `tabGL Entry` WHERE party=c.name AND is_cancelled=0) as outstanding,
             (SELECT MAX(posting_date) FROM `tabPayment Entry` WHERE party=c.name AND docstatus=1) as last_payment,
@@ -252,7 +254,7 @@ def export_customer_outstanding():
     data = frappe.db.sql("""
         SELECT 
             c.customer_name, 
-            c.custom_village, 
+            c.local_address, 
             SUM(si.outstanding_amount) as outstanding
         FROM `tabCustomer` c
         JOIN `tabSales Invoice` si ON c.name = si.customer
@@ -262,7 +264,7 @@ def export_customer_outstanding():
     """, as_dict=1)
     
     from frappe.utils.xlsxutils import make_xlsx
-    xlsx_file = make_xlsx([["Customer", "Village", "Outstanding"]] + [[d.customer_name, d.custom_village, d.outstanding] for d in data], "Customer Outstanding")
+    xlsx_file = make_xlsx([["Customer", "Village", "Outstanding"]] + [[d.customer_name, d.local_address, d.outstanding] for d in data], "Customer Outstanding")
     
     frappe.response['filename'] = f"Customer_Outstanding_{today()}.xlsx"
     frappe.response['filecontent'] = xlsx_file.getvalue()

@@ -549,7 +549,11 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div style="cursor: pointer;" onclick="app.showDashboard()">
                     <h2 id="cp-name" style="margin: 0; font-weight: 800;">Loading...</h2>
-                    <div id="cp-meta" style="opacity: 0.7; font-size: 0.9rem;">Village | Phone</div>
+                    <div id="cp-ref-addr"
+                        style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); opacity: 1; display: none;">
+                    </div>
+                    <div id="cp-meta" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); opacity: 1;">
+                        Village | Phone</div>
                 </div>
                 <div class="d-flex text-center">
                     <div style="padding: 0 20px; border-right: 1px solid var(--border-light);">
@@ -614,7 +618,10 @@
 
     <!-- VIEW: VILLAGE LEDGER -->
     <div id="view-village" class="view-section">
-        <button class="btn-glass mb-4" onclick="history.back()">← Back</button>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button class="btn-glass" onclick="history.back()">← Back</button>
+            <h2 style="margin: 0; font-weight: 800;">Village Ledger Dashboard</h2>
+        </div>
 
         <div class="glass-card">
             <div class="row align-items-center">
@@ -633,7 +640,13 @@
             </div>
         </div>
 
-        <div class="glass-card mt-4">
+        <div id="village-cards-dashboard" class="customer-grid mt-4 mb-4"></div>
+
+        <div class="glass-card mt-4" id="village-table-container" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 style="margin: 0; font-weight: 800;" id="vl-table-title">Customer Data</h3>
+                <button class="btn-glass btn-sm" onclick="app.showVillageLedger()">✖ Clear Selection</button>
+            </div>
             <table class="dashboard-table" id="village-table">
                 <thead>
                     <tr>
@@ -959,9 +972,22 @@
                     const d = r.message;
                     $('#cp-name').text(d.info.customer_name).css('color', 'var(--text-bright)');
 
-                    const village_str = d.info.village ? 'गाँव: ' + d.info.village : 'गाँव: -';
-                    const phone_str = d.info.phone ? 'Phone No.: ' + d.info.phone : 'Phone No.: -';
-                    $('#cp-meta').text(`${village_str} | ${phone_str}`);
+                    let refHtml = [];
+                    if (d.info.reference_name) {
+                        refHtml.push(`रेफरेंस: <strong style="color: var(--text-main);">${d.info.reference_name}</strong>`);
+                    }
+                    if (d.info.local_address) {
+                        refHtml.push(`पता: <strong style="color: var(--text-main);">${d.info.local_address}</strong>`);
+                    }
+                    if (refHtml.length > 0) {
+                        $('#cp-ref-addr').html(refHtml.join(' &nbsp;|&nbsp; ')).show();
+                    } else {
+                        $('#cp-ref-addr').hide();
+                    }
+
+                    const village_str = d.info.village ? `गाँव: <strong style="color: var(--text-main);">${d.info.village}</strong>` : 'गाँव: -';
+                    const phone_str = d.info.phone ? `Phone No.: <strong style="color: var(--text-main);">${d.info.phone}</strong>` : 'Phone No.: -';
+                    $('#cp-meta').html(`${village_str} &nbsp;|&nbsp; ${phone_str}`);
 
                     $('#cp-borrowed').text('₹ ' + this.formatMoney(d.metrics.total_borrowed));
                     $('#cp-repaid').text('₹ ' + this.formatMoney(d.metrics.total_repaid));
@@ -1107,18 +1133,65 @@
                 args: { doctype: 'Village', fields: ['name'], limit_page_length: 500, order_by: 'name asc' },
                 callback: (r) => {
                     const sel = $('#village-select');
-                    sel.empty().append('<option value="">-- Select Village --</option>');
+                    sel.empty().append('<option value="">-- All Villages Dashboard --</option>');
                     (r.message || []).forEach(v => sel.append(`<option value="${v.name}">${v.name}</option>`));
 
                     if (preselect_village && typeof preselect_village === 'string') {
                         sel.val(preselect_village);
                         this.loadVillageData(preselect_village);
+                    } else {
+                        this.loadVillageDashboard();
                     }
                 }
             });
         },
+
+        loadVillageDashboard: function () {
+            $('#village-table-container').hide();
+            $('#village-cards-dashboard').attr('style', 'display: grid !important;');
+
+            frappe.call({
+                method: 'nakoda_automation.dashboard.get_village_exposure',
+                callback: (r) => {
+                    const data = r.message || [];
+                    const container = $('#village-cards-dashboard');
+                    container.empty();
+
+                    let total_exp = 0;
+                    let total_cust = 0;
+
+                    data.forEach(v => {
+                        const vName = v.village || 'Unknown';
+                        total_exp += v.outstanding;
+                        total_cust += v.customer_count;
+                        container.append(`
+                            <div class="customer-card" onclick="app.showVillageLedger('${vName}')">
+                                <div class="outstanding-label">Village Exposure</div>
+                                <div class="outstanding-value">₹ ${this.formatMoney(v.outstanding)}</div>
+                                <div class="customer-name" style="font-size: 1.3rem; margin-top: 10px;">🏘️ ${vName}</div>
+                                <div class="customer-meta" style="margin-top: 10px;">
+                                    <span>👥 ${v.customer_count} Active Customers</span>
+                                </div>
+                            </div>
+                        `);
+                    });
+
+                    $('#vl-exposure').text('₹ ' + this.formatMoney(total_exp));
+                    $('#vl-customers').text(total_cust);
+                }
+            });
+        },
+
         loadVillageData: function (village) {
-            if (!village) return;
+            if (!village) {
+                this.loadVillageDashboard();
+                return;
+            }
+            $('#village-cards-dashboard').hide();
+            $('#village-table-container').show();
+            $('#vl-table-title').text(village + ' Customers');
+            $('#village-select').val(village);
+
             frappe.call({
                 method: 'nakoda_automation.dashboard.get_village_ledger',
                 args: { village: village },

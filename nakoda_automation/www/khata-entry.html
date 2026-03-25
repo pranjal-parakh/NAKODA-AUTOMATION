@@ -454,7 +454,7 @@
                     const fullInfo = await callAPI('get_customer_info', { customer_name: (cust.name || cust) });
                     activeCustomer.value = fullInfo;
                     searchResults.value = [];
-                    newCustomer.value = { name: '', phone: '', village: '' };
+                    newCustomer.value = { name: '', phone: '', village: newCustomer.value.village };
                     if (!skipHistory) history.pushState({ view: 'entry', customer: activeCustomer.value.name }, '');
                     await refreshTransactions();
                     focusAmount();
@@ -463,6 +463,8 @@
                 const changeCustomer = (skipHistory = false) => {
                     activeCustomer.value = null;
                     transactions.value = [];
+                    newCustomer.value = { name: '', phone: '', village: newCustomer.value.village };
+                    searchResults.value = [];
                     if (!skipHistory) history.pushState({ view: 'selection' }, '');
                     nextTick(() => {
                         const el = document.querySelector('input[placeholder="Type name to find or create..."]');

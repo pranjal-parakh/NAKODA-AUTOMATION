@@ -15,6 +15,18 @@ frappe.pages['village_ledger'].on_page_load = function (wrapper) {
         .village-table th { padding: 12px; border-bottom: 2px solid #f1f5f9; text-align: left; color: #64748b; font-size: 0.85rem; }
         .village-table td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; }
         .village-table tr:hover { background: #f8fafc; cursor: pointer; }
+        
+        .v-dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .v-card {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
+        }
+        .v-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
 	`;
 
     $('<style>').prop('type', 'text/css').html(css).appendTo('head');
@@ -32,6 +44,7 @@ class VillageLedger {
     init() {
         this.render_skeleton();
         this.setup_filters();
+        this.load_dashboard();
     }
 
     render_skeleton() {
@@ -51,7 +64,9 @@ class VillageLedger {
                     </div>
                 </div>
 
-                <div class="glass-card-dark" style="padding: 0;">
+                <div id="v-dashboard-cards" class="v-dashboard-grid"></div>
+
+                <div class="glass-card-dark" id="v-table-container" style="padding: 0; border: 1px solid #e2e8f0; border-radius: 12px; display: none;">
                     <table class="village-table" id="v-table">
                         <thead>
                             <tr>
@@ -78,12 +93,62 @@ class VillageLedger {
             options: 'Village',
             change: () => {
                 const village = this.page.fields_dict.village.get_value();
-                if (village) this.fetch_village_data(village);
+                if (village) {
+                    this.fetch_village_data(village);
+                } else {
+                    this.load_dashboard();
+                }
+            }
+        });
+
+        this.page.add_inner_button('Dashboard View', () => {
+            this.page.fields_dict.village.set_value('');
+        });
+    }
+
+    load_dashboard() {
+        $('#v-table-container').hide();
+        $('#v-dashboard-cards').show();
+
+        frappe.call({
+            method: 'nakoda_automation.dashboard.get_village_exposure',
+            callback: (r) => {
+                const data = r.message || [];
+                const container = $('#v-dashboard-cards');
+                container.empty();
+
+                let total_exp = 0;
+                let total_cust = 0;
+
+                data.forEach(v => {
+                    const vName = v.village || 'Unknown';
+                    total_exp += v.outstanding;
+                    total_cust += v.customer_count;
+
+                    const card = $(`
+                        <div class="v-card">
+                            <div class="v-label">Village Exposure</div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #e53e3e;">₹ ${format_currency(v.outstanding)}</div>
+                            <div style="font-size: 1.3rem; font-weight: 800; margin-top: 12px; color: #1e293b;">🏘️ ${vName}</div>
+                            <div style="margin-top: 5px; color: #64748b; font-size: 0.9rem;">👥 ${v.customer_count} Active Customers</div>
+                        </div>
+                    `);
+                    card.click(() => {
+                        this.page.fields_dict.village.set_value(vName);
+                    });
+                    container.append(card);
+                });
+
+                $('#v-total-exposure').text('₹ ' + format_currency(total_exp));
+                $('#v-total-customers').text(total_cust);
             }
         });
     }
 
     fetch_village_data(village) {
+        $('#v-dashboard-cards').hide();
+        $('#v-table-container').show();
+
         frappe.call({
             method: 'nakoda_automation.dashboard.get_village_ledger',
             args: { village: village },

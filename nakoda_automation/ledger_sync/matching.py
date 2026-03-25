@@ -4,11 +4,11 @@ from rapidfuzz import process, fuzz
 
 def get_all_customers():
     """Fetch all customers with their villages/custom fields for matching."""
-    # Assuming 'custom_village' exists. Adjust if standard territory is used.
+    # Assuming 'local_address' exists. Adjust if standard territory is used.
     # We will fetch mobile number as well.
     customers = frappe.get_all(
         "Customer",
-        fields=["name", "customer_name", "custom_village", "mobile_no"],
+        fields=["name", "customer_name", "local_address", "mobile_no"],
         filters={"disabled": 0}
     )
     return customers
@@ -38,7 +38,7 @@ def match_customer(customer_name, village, existing_customers):
     
     for c in existing_customers:
         c_name = c.get("customer_name") or c.get("name")
-        c_vil = c.get("custom_village") or ""
+        c_vil = c.get("local_address") or ""
         
         target_name = clean_for_match(c_name)
         target_vil = clean_for_match(c_vil)
@@ -105,7 +105,7 @@ def resolve_customer(record, existing_customers):
                     changed = True
                     phone_updated = True
                     
-        if village and not doc.custom_village:
+        if village and not doc.local_address:
             vname = str(village).strip()
             if not frappe.db.exists("Village", vname):
                 try:
@@ -113,7 +113,7 @@ def resolve_customer(record, existing_customers):
                     vdoc.village_name = vname
                     vdoc.insert(ignore_permissions=True)
                 except: pass
-            doc.custom_village = vname
+            doc.local_address = vname
             changed = True
                     
         if changed:
@@ -155,7 +155,7 @@ def resolve_customer(record, existing_customers):
                 vdoc.insert(ignore_permissions=True)
             except:
                 pass
-        doc.custom_village = vname 
+        doc.local_address = vname 
         
     doc.flags.ignore_permissions = True
     doc.insert(ignore_permissions=True)
@@ -173,7 +173,7 @@ def resolve_customer(record, existing_customers):
     existing_customers.append({
         "name": doc.name,
         "customer_name": doc.customer_name,
-        "custom_village": doc.get("custom_village"),
+        "local_address": doc.get("local_address"),
         "mobile_no": doc.get("mobile_no")
     })
     

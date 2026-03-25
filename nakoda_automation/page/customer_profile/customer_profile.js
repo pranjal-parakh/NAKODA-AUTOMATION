@@ -108,6 +108,7 @@ class CustomerProfile {
                         <div>
                             <div class="cust-name" id="p-name">Loading...</div>
                             <div class="cust-meta" id="p-meta">Village | Phone</div>
+                            <div class="cust-meta" id="p-ref-addr" style="font-weight: 600; font-size: 0.85rem; color: #4a5568; margin-top: 4px;">रेफरेंस: - | पता: -</div>
                         </div>
                         <div class="d-flex">
                             <div class="stat-box"><div class="stat-label">Borrowed</div><div class="stat-val" id="s-borrowed">₹ 0</div></div>
@@ -173,6 +174,10 @@ class CustomerProfile {
                 this.page.set_title(info.customer_name);
                 $('#p-name').text(info.customer_name);
                 $('#p-meta').text(`${info.village || 'No Village'} | ${info.phone || 'No Phone'}`);
+
+                const refName = info.reference_name || '-';
+                const localAddr = info.local_address || '-';
+                $('#p-ref-addr').text(`रेफरेंस: ${refName} | पता: ${localAddr}`);
 
                 $('#s-borrowed').text(this.fmt(m.total_borrowed));
                 $('#s-repaid').text(this.fmt(m.total_repaid));
