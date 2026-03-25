@@ -107,8 +107,8 @@ class CustomerProfile {
                     <div class="profile-header">
                         <div>
                             <div class="cust-name" id="p-name">Loading...</div>
-                            <div class="cust-meta" id="p-meta">Village | Phone</div>
-                            <div class="cust-meta" id="p-ref-addr" style="font-weight: 600; font-size: 0.85rem; color: #4a5568; margin-top: 4px;">रेफरेंस: - | पता: -</div>
+                            <div class="cust-meta" id="p-ref-addr" style="font-size: 0.9rem; margin-top: 4px; color: #4a5568; display: none;"></div>
+                            <div class="cust-meta" id="p-meta" style="font-size: 0.9rem; margin-top: 4px; color: #4a5568;">Village | Phone</div>
                         </div>
                         <div class="d-flex">
                             <div class="stat-box"><div class="stat-label">Borrowed</div><div class="stat-val" id="s-borrowed">₹ 0</div></div>
@@ -173,11 +173,22 @@ class CustomerProfile {
                 const m = r.message.metrics;
                 this.page.set_title(info.customer_name);
                 $('#p-name').text(info.customer_name);
-                $('#p-meta').text(`${info.village || 'No Village'} | ${info.phone || 'No Phone'}`);
+                let refHtml = [];
+                if (info.reference_name) {
+                    refHtml.push(`रेफरेंस: <strong style="color: #1e293b;">${info.reference_name}</strong>`);
+                }
+                if (info.local_address) {
+                    refHtml.push(`पता: <strong style="color: #1e293b;">${info.local_address}</strong>`);
+                }
+                if (refHtml.length > 0) {
+                    $('#p-ref-addr').html(refHtml.join(' &nbsp;|&nbsp; ')).show();
+                } else {
+                    $('#p-ref-addr').hide();
+                }
 
-                const refName = info.reference_name || '-';
-                const localAddr = info.local_address || '-';
-                $('#p-ref-addr').text(`रेफरेंस: ${refName} | पता: ${localAddr}`);
+                const village_str = info.village ? `गाँव: <strong style="color: #1e293b;">${info.village}</strong>` : 'गाँव: -';
+                const phone_str = info.phone ? `Phone No.: <strong style="color: #1e293b;">${info.phone}</strong>` : 'Phone No.: -';
+                $('#p-meta').html(`${village_str} &nbsp;|&nbsp; ${phone_str}`);
 
                 $('#s-borrowed').text(this.fmt(m.total_borrowed));
                 $('#s-repaid').text(this.fmt(m.total_repaid));

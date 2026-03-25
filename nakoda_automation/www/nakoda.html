@@ -864,19 +864,68 @@
         },
 
         renderChart: function (id, type, labels, data, colors) {
+            const chartEl = document.getElementById(id);
+            if (!chartEl) return;
+
             if (this.charts[id]) this.charts[id].destroy();
 
             const isLight = document.documentElement.getAttribute('data-theme') === 'light';
             const textColor = isLight ? '#6b7280' : '#888888';
             const gridColor = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
 
-            const ctx = document.getElementById(id).getContext('2d');
+            const ctx = chartEl.getContext('2d');
+            const wrapper = chartEl.parentElement;
+
+            let currentLabels = labels;
+            let currentData = data;
+
+            const existingScroll = wrapper.parentElement.querySelector('.chart-scroller');
+            if (existingScroll) existingScroll.remove();
+
+            const itemsPerView = 20;
+            if (type === 'bar' && labels.length > itemsPerView) {
+                currentLabels = labels.slice(0, itemsPerView);
+                currentData = data.slice(0, itemsPerView);
+
+                const scroller = document.createElement('div');
+                scroller.className = 'chart-scroller';
+                scroller.style.overflowX = 'auto';
+                scroller.style.overflowY = 'hidden';
+                scroller.style.height = '12px';
+                scroller.style.marginTop = '10px';
+                scroller.style.background = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)';
+                scroller.style.borderRadius = '4px';
+
+                const fakeWidth = Math.max(100, (labels.length / itemsPerView) * 100);
+                scroller.innerHTML = `<div style="height: 1px; width: ${fakeWidth}%;"></div>`;
+
+                wrapper.parentElement.appendChild(scroller);
+
+                let lastIdx = 0;
+                scroller.addEventListener('scroll', () => {
+                    if (!this.charts[id]) return;
+                    const maxScroll = scroller.scrollWidth - scroller.clientWidth;
+                    if (maxScroll <= 0) return;
+
+                    const ratio = scroller.scrollLeft / maxScroll;
+                    const maxIdx = labels.length - itemsPerView;
+                    const startIdx = Math.round(ratio * maxIdx);
+
+                    if (startIdx !== lastIdx) {
+                        lastIdx = startIdx;
+                        this.charts[id].data.labels = labels.slice(startIdx, startIdx + itemsPerView);
+                        this.charts[id].data.datasets[0].data = data.slice(startIdx, startIdx + itemsPerView);
+                        this.charts[id].update();
+                    }
+                });
+            }
+
             this.charts[id] = new Chart(ctx, {
                 type: type,
                 data: {
-                    labels: labels,
+                    labels: currentLabels,
                     datasets: [{
-                        data: data,
+                        data: currentData,
                         backgroundColor: colors,
                         borderColor: type === 'line' ? 'rgba(54, 162, 235, 1)' : 'transparent',
                         borderWidth: type === 'line' ? 3 : 0,
@@ -979,6 +1028,7 @@
                     if (d.info.local_address) {
                         refHtml.push(`पता: <strong style="color: var(--text-main);">${d.info.local_address}</strong>`);
                     }
+
                     if (refHtml.length > 0) {
                         $('#cp-ref-addr').html(refHtml.join(' &nbsp;|&nbsp; ')).show();
                     } else {
@@ -1204,13 +1254,13 @@
                     tbody.empty();
                     d.customers.forEach(c => {
                         tbody.append(`
-                        <tr onclick="app.showCustomer('${c.name}')">
-                            <td><b>${c.name}</b></td>
-                            <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
-                            <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                            <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
-                        </tr>
-                    `);
+                            <tr onclick="app.showCustomer('${c.name}')">
+                                <td><b>${c.name}</b></td>
+                                <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
+                                <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
+                                <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
+                            </tr>
+                        `);
                     });
                 }
             });

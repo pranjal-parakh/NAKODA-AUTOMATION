@@ -19,7 +19,7 @@ def create_customer(name, phone=None, village=None):
             "territory": "All Territories",
             "customer_type": "Individual",
             "mobile_no": phone,
-            "local_address": village
+            "custom_village": village
         })
         customer.insert(ignore_permissions=True)
         customer_name = customer.name
@@ -27,7 +27,7 @@ def create_customer(name, phone=None, village=None):
         # Update phone/village if provided
         customer = frappe.get_doc("Customer", customer_name)
         if phone: customer.mobile_no = phone
-        if village: customer.local_address = village
+        if village: customer.custom_village = village
         customer.save(ignore_permissions=True)
         
     return get_customer_info(customer_name)
@@ -36,9 +36,9 @@ def create_customer(name, phone=None, village=None):
 def search_customer(query):
     """Search for customers by name, phone, or village."""
     return frappe.db.sql("""
-        SELECT name, customer_name, mobile_no as phone, local_address as village
+        SELECT name, customer_name, mobile_no as phone, custom_village as village
         FROM `tabCustomer`
-        WHERE (name LIKE %s OR customer_name LIKE %s OR mobile_no LIKE %s OR local_address LIKE %s)
+        WHERE (name LIKE %s OR customer_name LIKE %s OR mobile_no LIKE %s OR custom_village LIKE %s)
         AND disabled = 0
         LIMIT 10
     """, (f"%{query}%", f"%{query}%", f"%{query}%", f"%{query}%"), as_dict=1)
@@ -58,7 +58,7 @@ def get_customer_info(customer_name):
         "name": customer.name,
         "customer_name": customer.customer_name,
         "phone": customer.mobile_no,
-        "village": customer.local_address,
+        "village": customer.custom_village,
         "outstanding": outstanding
     }
 
