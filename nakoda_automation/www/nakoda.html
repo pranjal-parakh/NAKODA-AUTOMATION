@@ -115,39 +115,63 @@
 
     /* Buttons */
     .btn-glass {
-        background: var(--btn-bg);
-        border: 1px solid var(--btn-border);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: var(--text-main);
-        padding: 10px 18px;
-        border-radius: 12px;
+        padding: 10px 22px;
+        border-radius: 14px;
         cursor: pointer;
-        transition: 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         font-weight: 600;
         font-size: 0.9rem;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    [data-theme="light"] .btn-glass {
+        background: rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .btn-glass:hover {
-        background: var(--btn-bg-hover);
+        background: rgba(255, 255, 255, 0.12);
         color: var(--text-bright);
-        border-color: var(--btn-border-hover);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        transform: translateY(-2px);
+        border-color: var(--accent-orange);
+    }
+
+    [data-theme="light"] .btn-glass:hover {
+        background: rgba(0, 0, 0, 0.06);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     }
 
     .btn-primary-glass {
-        background: var(--accent-orange);
+        background: linear-gradient(135deg, var(--accent-orange), #f39c12);
         border: none;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 12px;
+        color: white !important;
+        padding: 10px 24px;
+        border-radius: 14px;
         cursor: pointer;
         font-weight: 700;
         font-size: 0.9rem;
-        transition: 0.2s;
-        box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(230, 126, 34, 0.4);
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .btn-primary-glass:hover {
-        background: var(--accent-orange-hover);
-        box-shadow: 0 6px 20px rgba(243, 156, 18, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(230, 126, 34, 0.6);
+        filter: brightness(1.1);
     }
 
     /* Metrics */
@@ -499,21 +523,87 @@
         color: var(--text-bright);
         box-shadow: 0 2px 8px var(--shadow);
     }
+
+    /* Theme Toggle Switch */
+    .theme-switch-wrapper {
+        display: flex;
+        align-items: center;
+    }
+
+    .theme-switch {
+        display: inline-block;
+        height: 28px;
+        position: relative;
+        width: 54px;
+    }
+
+    .theme-switch input {
+        display: none;
+    }
+
+    .slider {
+        background-color: var(--btn-bg);
+        bottom: 0;
+        cursor: pointer;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        transition: .4s;
+        border: 1px solid var(--border-light);
+        border-radius: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 6px;
+    }
+
+    .slider:before {
+        background-color: var(--text-bright);
+        bottom: 3px;
+        content: "";
+        height: 20px;
+        left: 4px;
+        position: absolute;
+        transition: .4s;
+        width: 20px;
+        border-radius: 50%;
+        z-index: 2;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked+.slider {
+        background-color: var(--accent-orange);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(24px);
+    }
+
+    .slider .icon {
+        font-size: 14px;
+        user-select: none;
+    }
 </style>
 
 <!-- Navbar -->
 <div class="glass-nav">
-    <div class="nav-title" onclick="app.showDashboard()">नाकोड़ा उतई उधारी खाता</div>
-    <div>
-        <button class="btn-glass" onclick="app.toggleTheme()" style="margin-right: 10px;" id="theme-tgl">☀️
-            Light</button>
-        <button class="btn-glass" onclick="app.showCustomerList()" style="margin-right: 10px;">👤 Customers</button>
-        <button class="btn-glass" onclick="app.showVillageLedger()" style="margin-right: 10px;">🏘️ Village
-            Ledger</button>
-        <button class="btn-glass"
-            onclick="window.open('/api/method/nakoda_automation.dashboard.export_customer_outstanding')"
-            style="margin-right: 10px;">📁 Export Balances</button>
-        <button class="btn-glass" onclick="window.location.href='/app'">Back to ERP Desk</button>
+    <div class="d-flex align-items-center" style="gap: 30px; flex-wrap: nowrap;">
+        <div class="nav-title" onclick="app.showDashboard()" style="white-space: nowrap;">नाकोड़ा उतई उधारी खाता</div>
+        <div class="nav-buttons d-flex align-items-center" style="gap: 12px; flex-wrap: nowrap;">
+            <button class="btn-glass" onclick="app.showCustomerList()">👤 Customers </button>
+            <button class="btn-glass" onclick="app.showVillageLedger()">🏘️ Village Ledger</button>
+            <button class="btn-glass" onclick="window.location.href='/app'"> Back to ERP Desk</button>
+        </div>
+    </div>
+    <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" onchange="app.toggleTheme()" />
+            <div class="slider">
+                <span class="icon">🌙</span>
+                <span class="icon">☀️</span>
+            </div>
+        </label>
     </div>
 </div>
 
@@ -604,7 +694,11 @@
 
     <!-- VIEW: CUSTOMER PROFILE -->
     <div id="view-customer" class="view-section">
-        <button class="btn-glass mb-4" onclick="history.back()">← Back</button>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button class="btn-glass" onclick="history.back()">← Back</button>
+            <button class="btn-glass" onclick="window.open('/app/customer/' + app.currentCustomer)">✏️ Edit
+                Profile</button>
+        </div>
 
         <div class="glass-card">
             <div class="d-flex justify-content-between align-items-center">
@@ -712,6 +806,7 @@
                 <thead>
                     <tr>
                         <th>Customer Name</th>
+                        <th>Reference</th>
                         <th>Outstanding</th>
                         <th>Total Borrowed</th>
                         <th>Last Payment</th>
@@ -740,9 +835,9 @@
                     style="width: 300px; margin-bottom: 0; margin-right: 20px; padding: 10px 20px;">
                 <span style="margin-right: 15px; font-weight: 600; font-size: 0.9rem;">Sort by:</span>
                 <select id="cl-sort" class="glass-select" style="width: 200px; padding: 8px 12px; height: 40px;">
+                    <option value="customer_name|asc" selected>Name (A-Z)</option>
                     <option value="outstanding|desc">Outstanding (High to Low)</option>
                     <option value="outstanding|asc">Outstanding (Low to High)</option>
-                    <option value="customer_name|asc">Name (A-Z)</option>
                     <option value="total_borrowed|desc">Total Borrowed</option>
                     <option value="last_payment|desc">Last Payment Date</option>
                 </select>
@@ -755,6 +850,7 @@
                     <thead>
                         <tr>
                             <th>Customer Name</th>
+                            <th>Reference</th>
                             <th>Village</th>
                             <th>Outstanding</th>
                             <th>Total Borrowed</th>
@@ -789,15 +885,15 @@
         initTheme: function () {
             const saved = localStorage.getItem('nakoda_theme') || 'dark';
             document.documentElement.setAttribute('data-theme', saved);
-            document.getElementById('theme-tgl').innerText = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+            const checkbox = document.getElementById('checkbox');
+            if (checkbox) checkbox.checked = (saved === 'light');
         },
 
         toggleTheme: function () {
-            const current = document.documentElement.getAttribute('data-theme') || 'dark';
-            const next = current === 'dark' ? 'light' : 'dark';
+            const checkbox = document.getElementById('checkbox');
+            const next = checkbox.checked ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('nakoda_theme', next);
-            document.getElementById('theme-tgl').innerText = next === 'dark' ? '☀️ Light' : '🌙 Dark';
 
             // Re-render active charts with new colors
             Object.values(this.charts).forEach(c => c.destroy());
@@ -1328,6 +1424,7 @@
                     $('#village-table thead').html(`
                         <tr>
                             <th>Customer Name</th>
+                            <th>Reference</th>
                             <th>Current Outstanding</th>
                             <th>Total Borrowed</th>
                             <th>Total Paid</th>
@@ -1343,7 +1440,8 @@
 
                         tbody.append(`
                             <tr onclick="app.showCustomer('${c.name}')">
-                                <td><b>${c.name}</b></td>
+                                <td><b>${c.customer_name || c.name}</b></td>
+                                <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
                                 <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
                                 <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
                                 <td style="color: #2ecc71; font-weight: 600;">₹ ${this.formatMoney(paid)}</td>
@@ -1414,6 +1512,7 @@
                 tbody.append(`
                     <tr onclick="app.showCustomer('${c.name}')">
                         <td><b>${c.customer_name}</b></td>
+                        <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
                         <td>${c.village || '-'}</td>
                         <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
                         <td>₹ ${this.formatMoney(c.total_borrowed)}</td>

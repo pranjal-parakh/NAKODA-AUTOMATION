@@ -187,6 +187,8 @@ def get_village_ledger(village):
     customers = frappe.db.sql("""
         SELECT 
             c.name,
+            c.customer_name,
+            c.reference_name,
             SUM(si.outstanding_amount) as outstanding,
             (SELECT MAX(posting_date) FROM `tabPayment Entry` WHERE party=c.name AND docstatus=1) as last_payment,
             SUM(si.grand_total) as total_borrowed
@@ -194,7 +196,7 @@ def get_village_ledger(village):
         LEFT JOIN `tabSales Invoice` si ON c.name = si.customer AND si.docstatus = 1
         WHERE c.custom_village = %s
         GROUP BY c.name
-        ORDER BY outstanding DESC
+        ORDER BY c.customer_name ASC
     """, (village,), as_dict=1)
     
     summary = {
@@ -216,6 +218,7 @@ def get_all_customers():
             c.customer_name,
             c.custom_village as village,
             c.mobile_no as phone,
+            c.reference_name,
             (SELECT COALESCE(SUM(debit - credit), 0) FROM `tabGL Entry` WHERE party=c.name AND is_cancelled=0) as outstanding,
             (SELECT MAX(posting_date) FROM `tabPayment Entry` WHERE party=c.name AND docstatus=1) as last_payment,
             COALESCE(SUM(si.grand_total), 0) as total_borrowed
@@ -223,7 +226,7 @@ def get_all_customers():
         LEFT JOIN `tabSales Invoice` si ON c.name = si.customer AND si.docstatus = 1
         WHERE c.disabled = 0
         GROUP BY c.name
-        ORDER BY outstanding DESC
+        ORDER BY c.customer_name ASC
     """, as_dict=1)
     
     summary = {

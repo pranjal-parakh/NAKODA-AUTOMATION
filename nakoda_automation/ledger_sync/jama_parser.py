@@ -61,7 +61,7 @@ def parse_jama(file_path):
             
         # Ignore filter conditions explicitly
         row_str_search = raw_name + " " + " ".join(str(v) for v in vals)
-        if any(kw in row_str_search for kw in ["गिरवी", "AD का जमा", "नगदी", "स्कीम", "अन्य"]):
+        if any(kw in row_str_search for kw in ["गिरवी", "AD का जमा", "नगदी", "स्कीम", "अन्य", "ब्याज"]):
             continue
             
         try:
