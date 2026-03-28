@@ -39,6 +39,8 @@ def extract_metadata(raw_name):
     return name_clean, tenure_months, internal_ref_code
 
 
+
+# UDHAARI PARSER
 def process_excel(file_path):
     start = time.perf_counter()
     
@@ -71,6 +73,7 @@ def process_excel(file_path):
     df_j = df_j.map(normalize_text)
 
     # Find boundaries
+    # UDHAARI PARSING 
     u_mask = df_j.apply(lambda row: row.astype(str).str.contains("उधारी", na=False).any(), axis=1)
     if u_mask.any():
         y_start_u = df_j[u_mask].index[0]
