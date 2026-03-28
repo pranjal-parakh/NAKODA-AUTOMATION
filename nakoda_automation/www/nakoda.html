@@ -326,6 +326,67 @@
         animation: fadeIn 0.4s;
     }
 
+    /* Village Cards Glassmorphism */
+    .village-card {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px;
+        padding: 20px;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    [data-theme="light"] .village-card {
+        background: rgba(0, 0, 0, 0.03) !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .village-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--accent-orange) !important;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="light"] .village-card:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .village-card .outstanding-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+    }
+
+    .village-card .outstanding-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: var(--accent-orange);
+    }
+
+    .village-card .customer-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-top: 15px;
+        color: var(--text-bright);
+    }
+
+    .village-card .customer-meta {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -620,14 +681,14 @@
     <div id="view-village" class="view-section">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <button class="btn-glass" onclick="history.back()">← Back</button>
-            <h2 style="margin: 0; font-weight: 800;">Village Ledger Dashboard</h2>
         </div>
 
         <div class="glass-card">
             <div class="row align-items-center">
                 <div class="col-md-4">
-                    <div class="metric-label mb-2">Select Village</div>
-                    <select id="village-select" class="glass-select"></select>
+                    <div class="metric-label mb-2">Search Village</div>
+                    <input type="text" id="village-search" class="search-bar" placeholder="🔍 Type village name..."
+                        style="margin-bottom: 0;">
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="metric-label">Total Exposure</div>
@@ -686,10 +747,6 @@
                     <option value="last_payment|desc">Last Payment Date</option>
                 </select>
             </div>
-            <div class="toggle-group">
-                <button class="toggle-btn active" id="cl-btn-list" onclick="app.setCLView('list')">☰ List</button>
-                <button class="toggle-btn" id="cl-btn-card" onclick="app.setCLView('card')">🔲 Card</button>
-            </div>
         </div>
 
         <div id="cl-list-container">
@@ -708,7 +765,6 @@
                 </table>
             </div>
         </div>
-        <div id="cl-card-container" class="customer-grid" style="display: none;"></div>
     </div>
 
 </div>
@@ -773,16 +829,16 @@
                 }
             });
 
-            document.getElementById('village-select').addEventListener('change', (e) => {
-                this.loadVillageData(e.target.value);
-            });
-
             document.getElementById('cl-sort').addEventListener('change', (e) => {
                 this.renderCLData();
             });
 
             document.getElementById('cl-search').addEventListener('input', (e) => {
                 this.renderCLData();
+            });
+
+            document.getElementById('village-search').addEventListener('input', (e) => {
+                this.loadVillageDashboard();
             });
 
             window.addEventListener('popstate', (e) => {
@@ -1023,7 +1079,7 @@
 
                     let refHtml = [];
                     if (d.info.reference_name) {
-                        refHtml.push(`रेफरेंस: <strong style="color: var(--text-main);">${d.info.reference_name}</strong>`);
+                        refHtml.push(`रेफरेंस: <strong style="color: var(--text-main);">(${d.info.reference_name})</strong>`);
                     }
                     if (d.info.local_address) {
                         refHtml.push(`पता: <strong style="color: var(--text-main);">${d.info.local_address}</strong>`);
@@ -1177,35 +1233,50 @@
         showVillageLedger: function (preselect_village, skipHistory = false) {
             this.switchView('village', skipHistory ? null : { view: 'village', arg: preselect_village });
 
-            // Load village dropdown
-            frappe.call({
-                method: 'frappe.client.get_list',
-                args: { doctype: 'Village', fields: ['name'], limit_page_length: 500, order_by: 'name asc' },
-                callback: (r) => {
-                    const sel = $('#village-select');
-                    sel.empty().append('<option value="">-- All Villages Dashboard --</option>');
-                    (r.message || []).forEach(v => sel.append(`<option value="${v.name}">${v.name}</option>`));
-
-                    if (preselect_village && typeof preselect_village === 'string') {
-                        sel.val(preselect_village);
-                        this.loadVillageData(preselect_village);
-                    } else {
-                        this.loadVillageDashboard();
-                    }
-                }
-            });
+            if (preselect_village && typeof preselect_village === 'string') {
+                $('#village-search').val(preselect_village);
+                this.loadVillageData(preselect_village);
+            } else {
+                $('#village-search').val('');
+                this.loadVillageDashboard();
+            }
         },
 
         loadVillageDashboard: function () {
             $('#village-table-container').hide();
             $('#village-cards-dashboard').attr('style', 'display: grid !important;');
 
+            const query = $('#village-search').val() ? $('#village-search').val().toLowerCase() : '';
+
             frappe.call({
                 method: 'nakoda_automation.dashboard.get_village_exposure',
                 callback: (r) => {
-                    const data = r.message || [];
+                    let data = r.message || [];
                     const container = $('#village-cards-dashboard');
                     container.empty();
+
+                    // Matching and Sorting logic
+                    if (query) {
+                        data = data.filter(v => v.village && v.village.toLowerCase().includes(query));
+                        data.sort((a, b) => {
+                            const nameA = a.village.toLowerCase();
+                            const nameB = b.village.toLowerCase();
+
+                            // Exact match first
+                            if (nameA === query) return -1;
+                            if (nameB === query) return 1;
+
+                            // Starts with query second
+                            if (nameA.startsWith(query) && !nameB.startsWith(query)) return -1;
+                            if (!nameA.startsWith(query) && nameB.startsWith(query)) return 1;
+
+                            // Otherwise default to customer count
+                            return b.customer_count - a.customer_count;
+                        });
+                    } else {
+                        // Default Sort by Customers (High to Low)
+                        data.sort((a, b) => b.customer_count - a.customer_count);
+                    }
 
                     let total_exp = 0;
                     let total_cust = 0;
@@ -1215,11 +1286,11 @@
                         total_exp += v.outstanding;
                         total_cust += v.customer_count;
                         container.append(`
-                            <div class="customer-card" onclick="app.showVillageLedger('${vName}')">
+                            <div class="village-card" onclick="app.showVillageLedger('${vName}')">
                                 <div class="outstanding-label">Village Exposure</div>
                                 <div class="outstanding-value">₹ ${this.formatMoney(v.outstanding)}</div>
-                                <div class="customer-name" style="font-size: 1.3rem; margin-top: 10px;">🏘️ ${vName}</div>
-                                <div class="customer-meta" style="margin-top: 10px;">
+                                <div class="customer-name">गांव: ${vName}</div>
+                                <div class="customer-meta">
                                     <span>👥 ${v.customer_count} Active Customers</span>
                                 </div>
                             </div>
@@ -1239,7 +1310,7 @@
             }
             $('#village-cards-dashboard').hide();
             $('#village-table-container').show();
-            $('#vl-table-title').text(village + ' Customers');
+            $('#vl-table-title').text(village + ' उधारी खाता');
             $('#village-select').val(village);
 
             frappe.call({
@@ -1252,13 +1323,39 @@
 
                     const tbody = $('#village-table tbody');
                     tbody.empty();
+
+                    // Update header for improved visibility
+                    $('#village-table thead').html(`
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Current Outstanding</th>
+                            <th>Total Borrowed</th>
+                            <th>Total Paid</th>
+                            <th>Recovery %</th>
+                            <th>Last Payment</th>
+                        </tr>
+                    `);
+
                     d.customers.forEach(c => {
+                        const paid = c.total_borrowed - c.outstanding;
+                        const pct = c.total_borrowed > 0 ? Math.round((paid / c.total_borrowed) * 100) : 0;
+                        const pctColor = pct > 70 ? '#2ecc71' : (pct > 30 ? '#f1c40f' : '#e74c3c');
+
                         tbody.append(`
                             <tr onclick="app.showCustomer('${c.name}')">
                                 <td><b>${c.name}</b></td>
-                                <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
+                                <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
                                 <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                                <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
+                                <td style="color: #2ecc71; font-weight: 600;">₹ ${this.formatMoney(paid)}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; min-width: 60px;">
+                                            <div style="width: ${pct}%; height: 100%; background: ${pctColor};"></div>
+                                        </div>
+                                        <span style="font-weight: 700; font-size: 0.8rem; color: ${pctColor};">${pct}%</span>
+                                    </div>
+                                </td>
+                                <td style="opacity: 0.7; font-size: 0.85rem;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
                             </tr>
                         `);
                     });
@@ -1283,22 +1380,6 @@
                 }
             });
         },
-
-        setCLView: function (view) {
-            this.clView = view;
-            $('.toggle-btn').removeClass('active');
-            if (view === 'list') {
-                $('#cl-btn-list').addClass('active');
-                $('#cl-list-container').show();
-                $('#cl-card-container').hide();
-            } else {
-                $('#cl-btn-card').addClass('active');
-                $('#cl-list-container').hide();
-                $('#cl-card-container').show();
-            }
-            this.renderCLData();
-        },
-
         renderCLData: function () {
             if (!this.rawCLData) return;
 
@@ -1327,41 +1408,19 @@
                 return direction === 'asc' ? valA - valB : valB - valA;
             });
 
-            if (this.clView === 'list') {
-                const tbody = $('#cl-table tbody');
-                tbody.empty();
-                sortedData.forEach(c => {
-                    tbody.append(`
-                        <tr onclick="app.showCustomer('${c.name}')">
-                            <td><b>${c.customer_name}</b></td>
-                            <td>${c.village || '-'}</td>
-                            <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
-                            <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                            <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
-                        </tr>
-                    `);
-                });
-            } else {
-                const container = $('#cl-card-container');
-                container.empty();
-                sortedData.forEach(c => {
-                    container.append(`
-                        <div class="customer-card" onclick="app.showCustomer('${c.name}')">
-                            <div class="outstanding-label">Outstanding</div>
-                            <div class="outstanding-value">₹ ${this.formatMoney(c.outstanding)}</div>
-                            <div class="customer-name">${c.customer_name}</div>
-                            <div class="customer-meta">
-                                <span>📍 ${c.village || '-'}</span>
-                                <span style="opacity: 0.7;">📞 ${c.phone || '-'}</span>
-                            </div>
-                            <div style="margin-top: 12px; font-size: 0.8rem; border-top: 1px solid var(--border-light); padding-top: 8px; display: flex; justify-content: space-between;">
-                                <span>Borrowed: <b>₹ ${this.formatMoney(c.total_borrowed)}</b></span>
-                                <span>Paid: <b>₹ ${this.formatMoney((c.total_borrowed - c.outstanding))}</b></span>
-                            </div>
-                        </div>
-                    `);
-                });
-            }
+            const tbody = $('#cl-table tbody');
+            tbody.empty();
+            sortedData.forEach(c => {
+                tbody.append(`
+                    <tr onclick="app.showCustomer('${c.name}')">
+                        <td><b>${c.customer_name}</b></td>
+                        <td>${c.village || '-'}</td>
+                        <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
+                        <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
+                        <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
+                    </tr>
+                `);
+            });
         }
     };
 

@@ -1,6 +1,7 @@
 import string
 import frappe
 from rapidfuzz import process, fuzz
+from nakoda_automation.ledger_sync.excel_parser import DEBUG_EXCEL_IMPORT
 
 def get_all_customers():
     """Fetch all customers with their villages/custom fields for matching."""
@@ -17,8 +18,8 @@ def clean_for_match(text):
     if not text:
         return ""
     text = str(text).lower()
-    # Strip basic punctuation to help fuzzy match
-    for p in string.punctuation:
+    # Strip basic punctuation to help fuzzy match, including '/'
+    for p in string.punctuation.replace("(", "").replace(")", "") + "/":
         text = text.replace(p, " ")
     return " ".join(text.split())
 
@@ -81,7 +82,6 @@ def resolve_customer(record, existing_customers):
         doc = frappe.get_doc("Customer", matched_id)
         changed = False
         
-        from nakoda_automation.ledger_sync.excel_parser import DEBUG_EXCEL_IMPORT
         if DEBUG_EXCEL_IMPORT:
             print({
                 "raw_name": record.get("raw_name"),
@@ -92,18 +92,23 @@ def resolve_customer(record, existing_customers):
             
         # 3.2 Phone Handling Rule: append if different
         if clean_phone:
-            existing_phone = doc.get("mobile_no") or ""
+            existing_phone = str(doc.get("mobile_no") or "").strip()
+            # If empty, just set it
             if not existing_phone:
                 doc.mobile_no = clean_phone
                 changed = True
                 phone_updated = True
-            elif clean_phone not in existing_phone:
-                if len(existing_phone) > 20: 
-                    pass # Don't exceed field limit 
-                else:
-                    doc.mobile_no = existing_phone + ", " + clean_phone
-                    changed = True
-                    phone_updated = True
+            else:
+                # Check if this exact number is already in the string (comma/space separated)
+                parts = [p.strip() for p in existing_phone.replace(",", " ").split() if p.strip()]
+                if clean_phone not in parts:
+                    # Append it
+                    # Ensure we don't exceed field limit (usually 140 or 255 depending on system, but Customer mobile_no is usually small)
+                    new_val = existing_phone + ", " + clean_phone
+                    if len(new_val) < 130: # Safe margin for standard mobile_no fields
+                        doc.mobile_no = new_val
+                        changed = True
+                        phone_updated = True
                     
         if village and not doc.custom_village:
             vname = str(village).strip()
@@ -122,59 +127,9 @@ def resolve_customer(record, existing_customers):
             
         return matched_id, False, phone_updated
         
-    if record.get("type", "") == "Jama":
-        from nakoda_automation.ledger_sync.excel_parser import DEBUG_EXCEL_IMPORT
-        if DEBUG_EXCEL_IMPORT:
-            print({
-                "raw_name": record.get("raw_name"),
-                "village": village,
-                "error": "Customer not found"
-            })
-        return None, False, False
-        
-    # Create new customer
-    if not raw_name:
-        raw_name = f"Unknown - {village}" if village else "Unknown Customer"
-        
-    doc = frappe.new_doc("Customer")
-    doc.customer_name = raw_name
-    doc.customer_type = "Individual"
-    # doc.customer_group = "Commercial" # default
-    # doc.territory = "All Territories" # default
-    if clean_phone:
-        doc.mobile_no = clean_phone
-        phone_updated = True
-        
-    if village:
-        # Link logic: Ensure village exists, then set link
-        vname = str(village).strip()
-        if not frappe.db.exists("Village", vname):
-            try:
-                vdoc = frappe.new_doc("Village")
-                vdoc.village_name = vname
-                vdoc.insert(ignore_permissions=True)
-            except:
-                pass
-        doc.custom_village = vname 
-        
-    doc.flags.ignore_permissions = True
-    doc.insert(ignore_permissions=True)
-    
-    from nakoda_automation.ledger_sync.excel_parser import DEBUG_EXCEL_IMPORT
+    # NEW CUSTOMER CREATION DISABLED AS PER REQUEST (For both Udhaari and Jama)
+    # The return values will indicate No Match, allowing the user to create them manually.
     if DEBUG_EXCEL_IMPORT:
-        print({
-            "raw_name": record.get("raw_name"),
-            "name_clean": raw_name,
-            "matched_customer": doc.customer_name,
-            "match_score": "NEW (Score: {:.2f})".format(score)
-        })
-    
-    # Reload existing dictionary list so new customer is fuzzy matched next time in the loop
-    existing_customers.append({
-        "name": doc.name,
-        "customer_name": doc.customer_name,
-        "custom_village": doc.get("custom_village"),
-        "mobile_no": doc.get("mobile_no")
-    })
-    
-    return doc.name, True, phone_updated
+        print(f"No match for customer: {raw_name} ({village}). Creation disabled.")
+        
+    return None, False, False

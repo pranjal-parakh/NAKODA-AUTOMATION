@@ -34,7 +34,8 @@ def extract_metadata(raw_name):
         # Remove ALL numeric codes
         name_clean = re.sub(r'\(\d+\)', '', name_clean)
 
-    # Clean up any leftover double spaces or trailing/leading spaces
+    # 3. Final Cleaning: Remove slashes and leading/trailing spaces
+    name_clean = name_clean.replace("/", " ")
     name_clean = re.sub(r'\s+', ' ', name_clean).strip()
     return name_clean, tenure_months, internal_ref_code
 
@@ -113,15 +114,15 @@ def process_excel(file_path):
                 print(f"Parsed Udhaari -> bill_no: {bill_no}, raw_name: {raw_name}, village: {village}, amount: {amount}, phone: {phone}")
 
             records.append({
-                "type": "Udhaari",
-                "row_no": bill_no,
+                "type": "उधारी",
+                "row_no": "N/A",
                 "raw_name": raw_name,
                 "name_clean": name_clean,
                 "village": village,
                 "amount": amount,
                 "phone": phone,
                 "tenure_months": tenure_months,
-                "internal_ref_code": internal_ref_code
+                "internal_ref_code": bill_no
             })
 
     return records, excel_date

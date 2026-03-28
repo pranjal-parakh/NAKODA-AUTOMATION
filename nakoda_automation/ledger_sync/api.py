@@ -52,6 +52,7 @@ def parse_excel_ledger():
         customers_created = 0
         created_customer_names = []
         phones_updated = 0
+        updated_phone_names = []
         new_villages = []
         
         for rec in records:
@@ -62,6 +63,9 @@ def parse_excel_ledger():
                 created_customer_names.append(rec.get("raw_name") or f"Unknown - {rec.get('village', 'No Village')}")
             if ph_upd:
                 phones_updated += 1
+                cust_name = frappe.db.get_value("Customer", matched_id, "customer_name") if matched_id else "Unknown"
+                if cust_name not in updated_phone_names:
+                    updated_phone_names.append(cust_name)
                 
             if matched_id:
                 proc_log.append({
@@ -71,7 +75,7 @@ def parse_excel_ledger():
                     "is_new": is_new,
                     "phone_updated": ph_upd
                 })
-            elif rec.get("type") == "Jama":
+            elif rec.get("type") == "जमा":
                 proc_log.append({
                     "step": "Customer Not Found", 
                     "raw_name": rec.get("raw_name"), 
@@ -90,16 +94,16 @@ def parse_excel_ledger():
             amt = rec.get("amount", 0)
             status = "Pending"
             msg = ""
-            if txn_type == "Jama" and not rec.get("_customer_id"):
+            if not rec.get("_customer_id"):
                 status = "Skipped"
-                msg = "Customer not found. Skipped Posting."
+                msg = f"Customer '{rec.get('raw_name')}' not found. Skipped Posting."
             
-            display_type = "जमा" if txn_type == "Jama" else "उधारी"
+            display_type = "जमा" if txn_type == "जमा" else "उधारी"
                 
             if status == "Pending":
-                if txn_type == "Udhaari":
+                if txn_type == "उधारी":
                     total_udhaari += amt
-                elif txn_type == "Jama":
+                elif txn_type == "जमा":
                     total_jama += amt
                 
             # Ensure village exists in our new Village DocType before appending to grid
@@ -138,11 +142,14 @@ def parse_excel_ledger():
         
         duration = round(time.perf_counter() - start_time, 2)
         total_rows = len(records)
-        matched_udhaari = sum(1 for r in records if r.get("type") == "Udhaari" and r.get("_customer_id"))
-        matched_jama = sum(1 for r in records if r.get("type") == "Jama" and r.get("_customer_id"))
+        matched_udhaari = sum(1 for r in records if r.get("type") == "उधारी" and r.get("_customer_id"))
+        matched_jama = sum(1 for r in records if r.get("type") == "जमा" and r.get("_customer_id"))
         
-        skipped_jms = [r.get("raw_name") for r in records if r.get("type") == "Jama" and not r.get("_customer_id")]
+        skipped_jms = [r.get("raw_name") for r in records if r.get("type") == "जमा" and not r.get("_customer_id")]
+        skipped_udh = [r.get("raw_name") for r in records if r.get("type") == "उधारी" and not r.get("_customer_id")]
+        
         skipped_jama = len(skipped_jms)
+        skipped_udhaari = len(skipped_udh)
         
         success_msg = f"<b>Extraction Completed in {duration}s</b><br><br>"
         success_msg += f"📦 Total Records Found: {total_rows}<br>"
@@ -150,14 +157,19 @@ def parse_excel_ledger():
         success_msg += f"📉 <b>उधारी (Udhaari)</b><br>"
         success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Total in Excel: {len(ud_records)}<br>"
         success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Mapped successfully: {matched_udhaari}<br>"
+        if skipped_udhaari > 0:
+            uv_list = ", ".join(skipped_udh[:5])
+            if len(skipped_udh) > 5: uv_list += f" (+{len(skipped_udh)-5} more)"
+            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• ⚠️ Unmatched (Create Manually): {skipped_udhaari} ({uv_list})<br>"
+
         success_msg += f"<br>"
         success_msg += f"📈 <b>जमा (Jama)</b><br>"
         success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Total in Excel: {len(jm_records)}<br>"
         success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Mapped successfully: {matched_jama}<br>"
         if skipped_jama > 0:
-            v_list = ", ".join(skipped_jms[:5])
-            if len(skipped_jms) > 5: v_list += f" (+{len(skipped_jms)-5} more)"
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• ⚠️ Skipped (No Match): {skipped_jama} ({v_list})<br>"
+            jv_list = ", ".join(skipped_jms[:5])
+            if len(skipped_jms) > 5: jv_list += f" (+{len(skipped_jms)-5} more)"
+            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• ⚠️ Unmatched (Skipped): {skipped_jama} ({jv_list})<br>"
         success_msg += f"<br>"
         success_msg += f"👤 <b>Updates</b><br>"
         
@@ -168,7 +180,12 @@ def parse_excel_ledger():
         else:
             success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• New Customers Created: 0<br>"
             
-        success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Phone Numbers Updated: {phones_updated}<br>"
+        if phones_updated > 0:
+            p_list = ", ".join(updated_phone_names[:5])
+            if len(updated_phone_names) > 5: p_list += f" (+{len(updated_phone_names)-5} more)"
+            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Phone Numbers Updated: {phones_updated} ({p_list})<br>"
+        else:
+            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Phone Numbers Updated: 0<br>"
         
         if new_villages:
             success_msg += f"<br>🏘️ <b>New Villages Added:</b><br>"

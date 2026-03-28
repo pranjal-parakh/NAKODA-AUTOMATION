@@ -61,7 +61,7 @@ def parse_jama(file_path):
             
         # Ignore filter conditions explicitly
         row_str_search = raw_name + " " + " ".join(str(v) for v in vals)
-        if any(kw in row_str_search for kw in ["गिरवी", "AD का जमा", "नगदी"]):
+        if any(kw in row_str_search for kw in ["गिरवी", "AD का जमा", "नगदी", "स्कीम", "अन्य"]):
             continue
             
         try:
@@ -78,15 +78,15 @@ def parse_jama(file_path):
             print(f"Parsed Jama -> raw_name: {raw_name}, village: {village}, amount: {amount}")
 
         records.append({
-            "type": "Jama",
+            "type": "जमा",
             "row_no": "N/A",
             "raw_name": raw_name,
             "name_clean": name_clean,
             "village": village,
             "amount": amount,
             "phone": "",
-            "tenure_months": tenure_months,
-            "internal_ref_code": internal_ref_code
+            "tenure_months": "",
+            "internal_ref_code": ""
         })
         
     return records
