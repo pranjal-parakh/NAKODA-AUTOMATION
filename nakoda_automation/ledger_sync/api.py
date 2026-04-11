@@ -57,21 +57,28 @@ def parse_excel_ledger():
         
         for rec in records:
             matched_id, is_new, ph_upd = resolve_customer(rec, existing_customers)
+            
+            # Fetch the actual customer_name for display/storage as requested
+            customer_display_name = None
+            if matched_id:
+                customer_display_name = frappe.db.get_value("Customer", matched_id, "customer_name")
+            
             rec["_customer_id"] = matched_id
+            rec["_customer_name"] = customer_display_name
+            
             if is_new:
                 customers_created += 1
                 created_customer_names.append(rec.get("raw_name") or f"Unknown - {rec.get('village', 'No Village')}")
             if ph_upd:
                 phones_updated += 1
-                cust_name = frappe.db.get_value("Customer", matched_id, "customer_name") if matched_id else "Unknown"
-                if cust_name not in updated_phone_names:
-                    updated_phone_names.append(cust_name)
+                if customer_display_name not in updated_phone_names:
+                    updated_phone_names.append(customer_display_name or matched_id)
                 
             if matched_id:
                 proc_log.append({
                     "step": "Customer Resolved", 
                     "raw_name": rec.get("raw_name"), 
-                    "matched_id": matched_id,
+                    "matched_id": customer_display_name or matched_id,
                     "is_new": is_new,
                     "phone_updated": ph_upd
                 })
@@ -111,9 +118,9 @@ def parse_excel_ledger():
             if vname and vname not in ("None", "nan"):
                 if not frappe.db.exists("Village", vname):
                     try:
-                        vdoc = frappe.new_doc("Village")
-                        vdoc.village_name = vname
-                        vdoc.insert(ignore_permissions=True)
+                        # vdoc = frappe.new_doc("Village")
+                        # vdoc.village_name = vname
+                        # vdoc.insert(ignore_permissions=True)
                         new_villages.append(vname)
                     except:
                         pass
@@ -123,7 +130,7 @@ def parse_excel_ledger():
             ledger_day.append("ledger_rows", {
                 "transaction_type": display_type,
                 "row_reference": rec.get("row_no", ""),
-                "customer": rec.get("_customer_id"),
+                "customer": rec.get("_customer_name") or rec.get("_customer_id"),
                 "customer_name_raw": rec.get("raw_name"),
                 "village": vname,
                 "amount": amt,
@@ -137,6 +144,11 @@ def parse_excel_ledger():
         ledger_day.processing_log = json.dumps({"records": records, "log": "Parsed perfectly."}, indent=4, ensure_ascii=False)
         ledger_day.total_udhaari = total_udhaari
         ledger_day.total_jama = total_jama
+        
+        # Bypass link validation to allow friendly names in the customer columns as requested
+        ledger_day.flags.ignore_links = True
+        ledger_day.flags.ignore_permissions = True
+        
         ledger_day.save()
         frappe.db.commit()
         
@@ -250,10 +262,13 @@ def post_ledger_entries():
             amt = row.amount
             display_type = row.transaction_type
             txn_type = "Jama" if display_type == "जमा" else "Udhaari"
-            customer_id = row.customer
+            
             row_key = f"{txn_type}_{row_ref}_{row.customer_name_raw}"
             raw_rec = list(filter(lambda r: r.get("type") == txn_type and str(r.get("row_no")) == str(row_ref), log_data.get("records", [])))
             original_rec = raw_rec[0] if raw_rec else {}
+            
+            # Prefer original internal ID, fall back to row column
+            customer_id = original_rec.get("_customer_id") or row.customer
             
             # Strictly honor the owner's selected date on the Ledger Day record
             posting_date = ledger_day.ledger_date
@@ -370,6 +385,8 @@ def post_ledger_entries():
             proc_log.append({"step": "Transaction Aborted", "reason": f"Atomic transaction aborted due to row error: {error_msg}"})
             ledger_day.processing_log = json.dumps(proc_log, indent=4, ensure_ascii=False)
             # Revert rows to pending, except the ones we failed on? No, just save. Actually rolling back the DB rolls back row child writes too.
+            ledger_day.flags.ignore_links = True
+            ledger_day.flags.ignore_permissions = True
             ledger_day.save()
             frappe.db.commit()
             return {"status": "error", "message": f"Atomic transaction aborted due to row error: {error_msg}"}
@@ -378,6 +395,8 @@ def post_ledger_entries():
             ledger_day.rows_processed = processed
             ledger_day.rows_failed = failed
             ledger_day.processing_log = json.dumps(proc_log, indent=4, ensure_ascii=False)
+            ledger_day.flags.ignore_links = True
+            ledger_day.flags.ignore_permissions = True
             ledger_day.save()
             frappe.db.commit()
             return {"status": "success", "message": "ERP Ledger Postings successful!"}

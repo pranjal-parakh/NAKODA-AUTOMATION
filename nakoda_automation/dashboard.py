@@ -176,10 +176,10 @@ def search_customers(query):
     return frappe.db.sql("""
         SELECT name, customer_name, custom_village, mobile_no
         FROM `tabCustomer`
-        WHERE (name LIKE %s OR customer_name LIKE %s OR custom_village LIKE %s OR mobile_no LIKE %s)
+        WHERE (customer_name LIKE %s OR custom_village LIKE %s OR mobile_no LIKE %s)
         AND disabled = 0
         LIMIT 10
-    """, (f"%{query}%", f"%{query}%", f"%{query}%", f"%{query}%"), as_dict=1)
+    """, (f"%{query}%", f"%{query}%", f"%{query}%"), as_dict=1)
 
 @frappe.whitelist()
 def get_village_ledger(village):

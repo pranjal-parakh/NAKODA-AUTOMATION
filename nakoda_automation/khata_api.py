@@ -102,8 +102,9 @@ def create_udhaari_transaction(customer, date, amount):
     si.payment_terms_template = ""
     si.ignore_default_payment_terms_template = 1
     si.set_posting_time = 1
+    from frappe.utils import add_months
     si.posting_date = transaction_date
-    si.due_date = transaction_date
+    si.due_date = add_months(transaction_date, 3)
     si.insert(ignore_permissions=True)
     si.submit()
     
@@ -207,6 +208,21 @@ def get_customer_transactions(customer, limit=10):
     
     combined = sorted(list(invoices) + list(payments), key=lambda x: x['date'], reverse=True)
     return combined[:limit]
+
+@frappe.whitelist()
+def get_navigation_customers(current_customer):
+    """Returns the names of the previous and next customers based on creation date."""
+    customers = frappe.get_all("Customer", fields=["name"], order_by="creation asc", filters={"disabled": 0})
+    names = [c.name for c in customers]
+    
+    if current_customer not in names:
+        return {"prev": None, "next": None}
+    
+    idx = names.index(current_customer)
+    prev_cust = names[idx - 1] if idx > 0 else None
+    next_cust = names[idx + 1] if idx < len(names) - 1 else None
+    
+    return {"prev": prev_cust, "next": next_cust}
 
 def normalize_amount(amount_str):
     """Converts 12k to 12000, etc."""

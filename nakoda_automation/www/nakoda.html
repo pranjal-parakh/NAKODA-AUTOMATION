@@ -181,6 +181,7 @@
         margin: 10px 0;
         color: var(--text-bright);
         transition: color 0.3s;
+        white-space: nowrap;
     }
 
     .metric-label {
@@ -393,6 +394,7 @@
         font-size: 1.6rem;
         font-weight: 800;
         color: var(--accent-orange);
+        white-space: nowrap;
     }
 
     .village-card .customer-name {
@@ -475,6 +477,7 @@
         font-size: 1.4rem;
         font-weight: 800;
         color: #ff6b6b;
+        white-space: nowrap;
     }
 
     .customer-card .customer-name {
@@ -999,8 +1002,13 @@
                     if (r.exc) console.error("Chart Err:", r.exc);
                     if (!r.message) return;
                     const data = r.message;
-                    this.renderChart('villageChart', 'bar', data.map(d => d.village || 'Unknown'), data.map(d => d.outstanding), 'rgba(54, 162, 235, 0.8)');
-                    this.renderChart('villageCustChart', 'bar', data.map(d => d.village || 'Unknown'), data.map(d => d.customer_count), 'rgba(46, 204, 113, 0.8)');
+                    // Sort by outstanding for exposure chart
+                    const exposureData = [...data].sort((a,b) => b.outstanding - a.outstanding);
+                    this.renderChart('villageChart', 'bar', exposureData.map(d => d.village || 'Unknown'), exposureData.map(d => d.outstanding), 'rgba(54, 162, 235, 0.8)');
+                    
+                    // Sort by customer count for active customers chart
+                    const customerData = [...data].sort((a,b) => b.customer_count - a.customer_count);
+                    this.renderChart('villageCustChart', 'bar', customerData.map(d => d.village || 'Unknown'), customerData.map(d => d.customer_count), 'rgba(46, 204, 113, 0.8)');
                 }
             });
 

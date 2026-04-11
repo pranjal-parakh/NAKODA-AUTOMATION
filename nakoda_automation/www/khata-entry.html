@@ -28,8 +28,21 @@
                     <div class="outstanding-label">Outstanding Balance</div>
                     <div class="outstanding-value">₹ [[ formatMoney(activeCustomer.outstanding) ]]</div>
                 </div>
-                <div class="col-md-2 text-end">
-                    <button class="btn btn-dark btn-sm rounded-0" @click="changeCustomer">CHANGE CUSTOMER (Esc)</button>
+                <div class="col-md-3 text-end">
+                    <div class="d-flex flex-column gap-2">
+                        <button class="btn btn-dark btn-sm rounded-0" @click="changeCustomer">CHANGE CUSTOMER
+                            (Esc)</button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-light btn-sm rounded-0 flex-grow-1"
+                                :disabled="!navLinks.prev" @click="selectCustomer(navLinks.prev)">
+                                ← PREV
+                            </button>
+                            <button class="btn btn-outline-light btn-sm rounded-0 flex-grow-1"
+                                :disabled="!navLinks.next" @click="selectCustomer(navLinks.next)">
+                                NEXT →
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,6 +119,7 @@
                     </div>
 
                     <form @submit.prevent="submitTransaction" class="row g-4 align-items-end">
+                        <!-- Line 1: Type and Date -->
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">TYPE</label>
                             <select class="form-select mono-input h-large fw-bold" v-model="tx.type">
@@ -113,13 +127,23 @@
                                 <option value="Jama">JAMA [CR]</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold small">DATE</label>
-                            <div class="input-group">
-                                <input type="date" class="form-control mono-input h-large" v-model="tx.date">
+                        <div class="col-md-9">
+                            <label class="form-label fw-bold small">DATE (DD / MM / YYYY)</label>
+                            <div class="d-flex gap-1">
+                                <input type="text" class="form-control mono-input h-large text-center"
+                                    v-model="dateParts.day" placeholder="DD" maxlength="2" style="width: 75px;"
+                                    @input="autoTab($event, 'month')">
+                                <input type="text" class="form-control mono-input h-large text-center"
+                                    v-model="dateParts.month" id="month-input" placeholder="MM" maxlength="2"
+                                    style="width: 75px;" @input="autoTab($event, 'year')">
+                                <input type="text" class="form-control mono-input h-large text-center"
+                                    v-model="dateParts.year" id="year-input" placeholder="YYYY" maxlength="4"
+                                    style="width: 120px;">
                             </div>
                         </div>
-                        <div class="col-md-4">
+
+                        <!-- Line 2: Amount and Action (Forced to new line) -->
+                        <div class="col-md-9">
                             <label class="form-label fw-bold small">AMOUNT</label>
                             <div class="input-group h-large">
                                 <span class="input-group-text bg-white border-end-0 fw-bold">₹</span>
@@ -128,7 +152,7 @@
                                     required>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <button type="submit" class="btn btn-black w-100 h-large fw-bold rounded-0"
                                 :disabled="loading">
                                 [[ loading ? '...' : 'ADD' ]]
@@ -381,11 +405,26 @@
                 const transactions = ref([]);
                 const villages = ref([]);
                 const villageSuggestions = ref([]);
+                const navLinks = ref({ prev: null, next: null });
 
                 const newCustomer = ref({ name: '', phone: '', village: '' });
-                const tx = ref({ type: 'Udhaari', date: new Date().toISOString().split('T')[0], amount: '' });
+                const now = new Date();
+                const dateParts = ref({
+                    day: String(now.getDate()).padStart(2, '0'),
+                    month: String(now.getMonth() + 1).padStart(2, '0'),
+                    year: String(now.getFullYear())
+                });
+                const tx = ref({ type: 'Udhaari', date: '', amount: '' });
 
                 const amountInput = ref(null);
+
+                const autoTab = (e, nextId) => {
+                    const el = e.target;
+                    if (el.value.length === el.maxLength) {
+                        const next = document.getElementById(nextId + '-input');
+                        if (next) next.focus();
+                    }
+                };
 
                 // API CALLS
                 const callAPI = (method, args = {}) => {
@@ -450,13 +489,23 @@
                     villageSuggestions.value = [];
                 };
 
+                const updateNav = async () => {
+                    if (!activeCustomer.value) return;
+                    const res = await callAPI('get_navigation_customers', { current_customer: activeCustomer.value.name });
+                    navLinks.value = res;
+                };
+
                 const selectCustomer = async (cust, skipHistory = false) => {
+                    if (!cust) return;
                     const fullInfo = await callAPI('get_customer_info', { customer_name: (cust.name || cust) });
                     activeCustomer.value = fullInfo;
                     searchResults.value = [];
-                    newCustomer.value = { name: '', phone: '', village: newCustomer.value.village };
+                    newCustomer.value = { name: '', phone: '', village: '' };
+                    // Clear date on customer change
+                    dateParts.value = { day: '', month: '', year: '' };
                     if (!skipHistory) history.pushState({ view: 'entry', customer: activeCustomer.value.name }, '');
                     await refreshTransactions();
+                    await updateNav();
                     focusAmount();
                 };
 
@@ -465,6 +514,8 @@
                     transactions.value = [];
                     newCustomer.value = { name: '', phone: '', village: newCustomer.value.village };
                     searchResults.value = [];
+                    // Clear date on customer change
+                    dateParts.value = { day: '', month: '', year: '' };
                     if (!skipHistory) history.pushState({ view: 'selection' }, '');
                     nextTick(() => {
                         const el = document.querySelector('input[placeholder="Type name to find or create..."]');
@@ -477,9 +528,16 @@
 
                     try {
                         const method = tx.value.type === 'Udhaari' ? 'create_udhaari_transaction' : 'create_jama_transaction';
+
+                        let y = dateParts.value.year;
+                        if (y && y.length === 2) {
+                            y = "20" + y;
+                        }
+
+                        const isoDate = `${y}-${dateParts.value.month}-${dateParts.value.day}`;
                         await callAPI(method, {
                             customer: activeCustomer.value.name,
-                            date: tx.value.date || today(),
+                            date: isoDate,
                             amount: tx.value.amount
                         });
 
@@ -549,7 +607,8 @@
                     loading, activeCustomer, searchResults, transactions, newCustomer, tx, villages,
                     villageSuggestions, filterVillages, selectVillage,
                     createCustomer, debouncedSearch, selectCustomer, changeCustomer, submitTransaction,
-                    formatMoney, formatDate, amountInput, loadVillages
+                    formatMoney, formatDate, amountInput, loadVillages, dateParts, autoTab,
+                    navLinks, updateNav
                 };
             }
         }).mount('#app');

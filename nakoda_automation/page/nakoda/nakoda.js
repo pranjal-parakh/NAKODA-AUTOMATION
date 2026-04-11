@@ -50,6 +50,7 @@ function setup_nakoda_page(wrapper) {
 			background: linear-gradient(to right, #fff, #ddd);
 			-webkit-background-clip: text;
 			-webkit-text-fill-color: transparent;
+			white-space: nowrap;
 		}
 
 		.metric-label {
@@ -160,7 +161,7 @@ class NakodaDashboard {
 					</div>
 					<div class="col-md-3">
 						<div class="glass-card" id="metric-jama">
-							<div class="metric-label">Jama Today</div>
+							<div class="metric-label">Total Jama</div>
 							<div class="metric-value">₹ 0.0</div>
 						</div>
 					</div>

@@ -38,7 +38,7 @@ def match_customer(customer_name, village, existing_customers):
     best_match_id = None
     
     for c in existing_customers:
-        c_name = c.get("customer_name") or c.get("name")
+        c_name = c.get("customer_name")
         c_vil = c.get("custom_village") or ""
         
         target_name = clean_for_match(c_name)
