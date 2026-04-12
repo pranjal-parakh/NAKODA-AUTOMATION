@@ -8,6 +8,7 @@
  "field_order": [
   "ledger_date",
   "excel_file",
+  "use_v2_matching",
   "total_udhaari",
   "total_jama",
   "pending_amount",
@@ -28,6 +29,12 @@
    "fieldname": "excel_file",
    "fieldtype": "Attach",
    "label": "Excel File"
+  },
+  {
+   "default": "1",
+   "fieldname": "use_v2_matching",
+   "fieldtype": "Check",
+   "label": "Use Hierarchical Matching (V2)"
   },
   {
    "fieldname": "total_udhaari",

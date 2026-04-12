@@ -37,7 +37,7 @@ def parse_excel_ledger():
             return {"status": "success", "message": "No structured rows found."}
 
         posting_date = excel_date or getdate()
-        from nakoda_automation.ledger_sync.matching import get_all_customers, resolve_customer
+        from nakoda_automation.ledger_sync.matching import get_all_customers, resolve_customer, resolve_customer_v2
         existing_customers = get_all_customers()
 
         # Update Ledger Day main fields only if not set
@@ -53,10 +53,17 @@ def parse_excel_ledger():
         created_customer_names = []
         phones_updated = 0
         updated_phone_names = []
-        new_villages = []
+        
+        # Read checkbox state from the doctype (defaults to True if field missing)
+        USE_V2 = bool(ledger_day.get("use_v2_matching", 1))
         
         for rec in records:
-            matched_id, is_new, ph_upd = resolve_customer(rec, existing_customers)
+            if USE_V2:
+                matched_id, is_new, ph_upd, m_details = resolve_customer_v2(rec, existing_customers)
+            else:
+                matched_id, is_new, ph_upd, m_details = resolve_customer(rec, existing_customers)
+            
+            rec["_match_details"] = m_details
             
             # Fetch the actual customer_name for display/storage as requested
             customer_display_name = None
@@ -136,6 +143,8 @@ def parse_excel_ledger():
                 "amount": amt,
                 "status": status,
                 "message": msg,
+                "matched_village": rec.get("_match_details", {}).get("matched_village"),
+                "match_info": json.dumps(rec.get("_match_details", {}), indent=2, ensure_ascii=False),
                 "tenure_months": rec.get("tenure_months", 0)
             })
             
@@ -154,60 +163,104 @@ def parse_excel_ledger():
         
         duration = round(time.perf_counter() - start_time, 2)
         total_rows = len(records)
-        matched_udhaari = sum(1 for r in records if r.get("type") == "उधारी" and r.get("_customer_id"))
-        matched_jama = sum(1 for r in records if r.get("type") == "जमा" and r.get("_customer_id"))
+        matched_udhaari = sum(1 for r in records if r.get("type") == "\u0909\u0927\u093e\u0930\u0940" and r.get("_customer_id"))
+        matched_jama = sum(1 for r in records if r.get("type") == "\u091c\u092e\u093e" and r.get("_customer_id"))
+        skipped_jama = sum(1 for r in records if r.get("type") == "\u091c\u092e\u093e" and not r.get("_customer_id"))
+        skipped_udhaari = sum(1 for r in records if r.get("type") == "\u0909\u0927\u093e\u0930\u0940" and not r.get("_customer_id"))
         
-        skipped_jms = [r.get("raw_name") for r in records if r.get("type") == "जमा" and not r.get("_customer_id")]
-        skipped_udh = [r.get("raw_name") for r in records if r.get("type") == "उधारी" and not r.get("_customer_id")]
-        
-        skipped_jama = len(skipped_jms)
-        skipped_udhaari = len(skipped_udh)
-        
-        success_msg = f"<b>Extraction Completed in {duration}s</b><br><br>"
-        success_msg += f"📦 Total Records Found: {total_rows}<br>"
-        success_msg += f"--------------------------------<br>"
-        success_msg += f"📉 <b>उधारी (Udhaari)</b><br>"
-        success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Total in Excel: {len(ud_records)}<br>"
-        success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Mapped successfully: {matched_udhaari}<br>"
-        if skipped_udhaari > 0:
-            uv_list = ", ".join(skipped_udh[:5])
-            if len(skipped_udh) > 5: uv_list += f" (+{len(skipped_udh)-5} more)"
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• ⚠️ Unmatched (Create Manually): {skipped_udhaari} ({uv_list})<br>"
-
-        success_msg += f"<br>"
-        success_msg += f"📈 <b>जमा (Jama)</b><br>"
-        success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Total in Excel: {len(jm_records)}<br>"
-        success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Mapped successfully: {matched_jama}<br>"
-        if skipped_jama > 0:
-            jv_list = ", ".join(skipped_jms[:5])
-            if len(skipped_jms) > 5: jv_list += f" (+{len(skipped_jms)-5} more)"
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• ⚠️ Unmatched (Skipped): {skipped_jama} ({jv_list})<br>"
-        success_msg += f"<br>"
-        success_msg += f"👤 <b>Updates</b><br>"
-        
+        # ── Summary header ───────────────────────────────────────────────────
+        success_msg  = f"<b>Extraction Completed in {duration}s</b><br>"
+        success_msg += f"<span style='font-size:0.85rem;color:#888;'>Total: {total_rows} records &nbsp;|&nbsp; "
+        success_msg += f"\u091c\u092e\u093e: {len(jm_records)} ({matched_jama} mapped, {skipped_jama} unmatched) &nbsp;|&nbsp; "
+        success_msg += f"\u0909\u0927\u093e\u0930\u0940: {len(ud_records)} ({matched_udhaari} mapped, {skipped_udhaari} unmatched)"
         if customers_created > 0:
-            c_list = ", ".join(created_customer_names[:5])
-            if len(created_customer_names) > 5: c_list += f" (+{len(created_customer_names)-5} more)"
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• New Customers Created: {customers_created} ({c_list})<br>"
-        else:
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• New Customers Created: 0<br>"
-            
+            success_msg += f" &nbsp;|&nbsp; \U0001f464 New: {customers_created}"
         if phones_updated > 0:
-            p_list = ", ".join(updated_phone_names[:5])
-            if len(updated_phone_names) > 5: p_list += f" (+{len(updated_phone_names)-5} more)"
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Phone Numbers Updated: {phones_updated} ({p_list})<br>"
-        else:
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;• Phone Numbers Updated: 0<br>"
+            success_msg += f" &nbsp;|&nbsp; \U0001f4de Updated: {phones_updated}"
+        success_msg += "</span>"
         
-        if new_villages:
-            success_msg += f"<br>🏘️ <b>New Villages Added:</b><br>"
-            # Limit to 5 names to keep it clean
-            v_list = ", ".join(new_villages[:5])
-            if len(new_villages) > 5: v_list += f" (+{len(new_villages)-5} more)"
-            success_msg += f"&nbsp;&nbsp;&nbsp;&nbsp;{v_list}<br>"
-            
-        success_msg += f"--------------------------------<br>"
-        success_msg += "<br>Please verify the <b>Pending</b> rows in the grid below before final Posting."
+        # ── Per-transaction detail table ─────────────────────────────────────
+        def build_txn_table(recs, title, emoji):
+            if not recs:
+                return ""
+            tbl  = f"<br><br><b>{emoji} {title}</b>"
+            tbl += "<div style='overflow-x:auto;width:100%;'>"
+            tbl += (
+                "<table style='width:100%;border-collapse:collapse;font-size:0.72rem;margin-top:6px;white-space:nowrap;'>"
+                "<thead><tr>"
+                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>#</th>"
+                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Raw Name</th>"
+                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Raw Village</th>"
+                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Village</th>"
+                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Matched Customer</th>"
+                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Via</th>"
+                "<th style='padding:4px 6px;text-align:center;border:1px solid #ccc;'>Score</th>"
+                "<th style='padding:4px 6px;text-align:right;border:1px solid #ccc;'>Amount</th>"
+                "</tr></thead><tbody>"
+            )
+            total_amt = 0
+            for idx, r in enumerate(recs, 1):
+                md      = r.get("_match_details") or {}
+                matched = bool(r.get("_customer_id"))
+                cname   = r.get("_customer_name") or r.get("_customer_id") or "\u2014"
+                
+                raw_village = r.get("village") or "\u2014"
+                
+                m_village = md.get("matched_village") or ""
+                r_village = r.get("village") or ""
+                if matched and m_village:
+                    vil_cell = f"<span style='color:green;'>\u2714 {m_village}</span>"
+                elif r_village:
+                    vil_cell = f"<span style='color:red;'>\u2718 {r_village}</span>"
+                else:
+                    vil_cell = "\u2014"
+                
+                raw_score = float(md.get("best_score") or md.get("score") or 0)
+                score_disp = f"{round(raw_score, 1)}%" if raw_score else "\u2014"
+                score_color = "green" if raw_score >= 70 else ("orange" if raw_score >= 30 else "red")
+                
+                via = md.get("matched_via") or ("V1 Fuzzy" if md.get("score") else ("\u2014" if matched else "No Match"))
+                
+                cname_disp = (
+                    f"<b style='color:{score_color};'>{cname}</b>" if matched
+                    else f"<span style='color:red;'>\u2718 Not Matched</span>"
+                )
+                amt_val = r.get('amount', 0)
+                total_amt += amt_val
+                amt = f"\u20b9{amt_val:,.0f}"
+                
+                tbl += (
+                    f"<tr>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{idx}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{r.get('raw_name','')}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{raw_village}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{vil_cell}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{cname_disp}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{via}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;text-align:center;"
+                    f"color:{score_color};font-weight:700;'>{score_disp}</td>"
+                    f"<td style='padding:3px 5px;border:1px solid #ccc;text-align:right;"
+                    f"font-weight:600;'>{amt}</td>"
+                    f"</tr>"
+                )
+            # Total footer row
+            tbl += (
+                f"<tr>"
+                f"<td colspan='7' style='padding:6px 10px;border:1px solid #ccc;"
+                f"text-align:right;font-weight:700;'>Total</td>"
+                f"<td style='padding:6px 10px;border:1px solid #ccc;text-align:right;"
+                f"font-weight:700;'>\u20b9{total_amt:,.0f}</td>"
+                f"</tr>"
+            )
+            tbl += "</tbody></table></div>"
+            return tbl
+        
+        jama_recs    = [r for r in records if r.get("type") == "\u091c\u092e\u093e"]
+        udhaari_recs = [r for r in records if r.get("type") == "\u0909\u0927\u093e\u0930\u0940"]
+        
+        success_msg += build_txn_table(jama_recs,    "\u091c\u092e\u093e (Jama) Transactions",    "\U0001f4c8")
+        success_msg += build_txn_table(udhaari_recs, "\u0909\u0927\u093e\u0930\u0940 (Udhaari) Transactions", "\U0001f4c9")
+
         
         return {"status": "success", "message": success_msg}
         

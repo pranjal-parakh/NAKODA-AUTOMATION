@@ -56,7 +56,7 @@ def match_customer(customer_name, village, existing_customers):
             best_score = candidate_score
             best_match_id = c.get("name")
             
-    if best_score >= 70:
+    if best_score >= 30:
         return best_match_id, best_score
         
     return None, best_score
@@ -126,11 +126,98 @@ def resolve_customer(record, existing_customers):
             doc.flags.ignore_permissions = True
             doc.save()
             
-        return matched_id, False, phone_updated
+        return matched_id, False, phone_updated, {"matched_via": "V1 Fuzzy", "score": score}
         
     # NEW CUSTOMER CREATION DISABLED AS PER REQUEST (For both Udhaari and Jama)
     # The return values will indicate No Match, allowing the user to create them manually.
     if DEBUG_EXCEL_IMPORT:
         print(f"No match for customer: {raw_name} ({village}). Creation disabled.")
         
-    return None, False, False
+    return None, False, False, {"reason": "No fuzzy match found (Score < 30)"}
+
+def resolve_customer_v2(record, existing_customers):
+    """
+    Deterministic hierarchical matching pipeline (V2).
+    """
+    raw_name_input = record.get("raw_name", "")
+    name_clean = record.get("name_clean", "")
+    village_input = record.get("village", "") or ""
+    
+    clean_name_search = clean_for_match(name_clean)
+    clean_vil_search = clean_for_match(village_input)
+    
+    match_details = {
+        "v2_active": True,
+        "village_candidates": 0,
+        "prefix_candidates": 0,
+        "best_score": 0,
+        "reason": "",
+        "matched_village": ""
+    }
+    
+    # STEP 1: VILLAGE FILTER (STRICT)
+    village_candidates = []
+    for c in existing_customers:
+        c_vil = c.get("custom_village") or ""
+        target_vil = clean_for_match(c_vil)
+        
+        if not clean_vil_search and not target_vil:
+            vil_score = 100
+        else:
+            vil_score = fuzz.token_sort_ratio(clean_vil_search, target_vil)
+            
+        if vil_score >= 90:
+            village_candidates.append(c)
+            
+    match_details["village_candidates"] = len(village_candidates)
+            
+    if not village_candidates:
+        match_details["reason"] = f"No village candidates found (Strict Match score < 90/100 for '{village_input}')"
+        cid, is_new, ph_upd, legacy_details = resolve_customer(record, existing_customers)
+        match_details.update(legacy_details)
+        match_details["v2_active"] = False
+        return cid, is_new, ph_upd, match_details
+        
+    # STEP 2: PREFIX FILTER (LOCALIZED)
+    prefix_candidates = []
+    words = [w.strip() for w in name_clean.split() if w.strip()]
+    if words:
+        prefix = words[0][:3].lower()
+        for i, c in enumerate(village_candidates):
+            c_name_clean = clean_for_match(c.get("customer_name") or "")
+            c_words = [w.strip() for w in c_name_clean.split() if w.strip()]
+            if c_words and c_words[0].lower().startswith(prefix):
+                prefix_candidates.append(c)
+                
+    match_details["prefix_candidates"] = len(prefix_candidates)
+    
+    final_candidates = prefix_candidates if prefix_candidates else village_candidates
+    if not prefix_candidates:
+        match_details["info"] = "No prefix matches found; using all village candidates."
+    
+    # STEP 3: FINAL RESOLUTION
+    matched_customer = None
+    best_score = 0
+    
+    for c in final_candidates:
+        c_name_clean = clean_for_match(c.get("customer_name") or "")
+        score = fuzz.token_sort_ratio(clean_name_search, c_name_clean)
+        if score > best_score:
+            best_score = score
+            matched_customer = c
+                
+    match_details["best_score"] = best_score
+    if matched_customer:
+        match_details["matched_village"] = matched_customer.get("custom_village")
+        
+    if not matched_customer or best_score < 30:
+        match_details["reason"] = f"Fuzzy score {best_score} < 30 threshold"
+        cid, is_new, ph_upd, legacy_details = resolve_customer(record, existing_customers)
+        # Preserve V2 metrics but use V1 reason if V1 found it
+        match_details["legacy_match"] = legacy_details
+        return cid, is_new, ph_upd, match_details
+        
+    # STEP 4: RESOLVE & UPDATE
+    match_details["matched_via"] = "V2 Prefix/Village" if prefix_candidates else "V2 Village Fuzzy"
+    cid, is_new, ph_upd, _ = resolve_customer(record, [matched_customer])
+    return cid, is_new, ph_upd, match_details

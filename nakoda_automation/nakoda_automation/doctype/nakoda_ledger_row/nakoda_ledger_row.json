@@ -14,6 +14,8 @@
   "status",
   "message",
   "village",
+  "matched_village",
+  "match_info",
   "tenure_months"
  ],
  "fields": [
@@ -68,6 +70,16 @@
    "in_list_view": 1,
    "label": "Village",
    "options": "Village"
+  },
+  {
+   "fieldname": "matched_village",
+   "fieldtype": "Data",
+   "label": "Matched Village"
+  },
+  {
+   "fieldname": "match_info",
+   "fieldtype": "Small Text",
+   "label": "Match Info"
   },
   {
    "columns": 1,
