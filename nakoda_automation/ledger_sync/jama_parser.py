@@ -43,6 +43,7 @@ def parse_jama(file_path):
         while len(vals) <= 10:
             vals.append("")
             
+        # G clolumn me raw name , J me village , K me amount 
         raw_name = str(vals[6]).strip() if pd.notna(vals[6]) else ""
         village = str(vals[9]).strip() if pd.notna(vals[9]) else ""
         amt_raw = str(vals[10]).replace(",", "").strip() if pd.notna(vals[10]) else ""
@@ -79,13 +80,13 @@ def parse_jama(file_path):
 
         records.append({
             "type": "जमा",
-            "row_no": "N/A",
+            # "row_no": "N/A",
             "raw_name": raw_name,
             "name_clean": name_clean,
             "village": village,
             "amount": amount,
-            "phone": "",
-            "tenure_months": "",
+            # "phone": "",
+            # "tenure_months": "",
             "internal_ref_code": ""
         })
         

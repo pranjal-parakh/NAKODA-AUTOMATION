@@ -90,6 +90,8 @@ def process_excel(file_path):
             vals = list(row.values)
             if len(vals) < 7: continue # Too empty, skip
             
+
+            # C me bill no , E me raw name , F me village , G me amount , H me phone 
             bill_no = str(vals[2]).strip() if pd.notna(vals[2]) else ""
             raw_name = str(vals[4]).strip() if pd.notna(vals[4]) else ""
             village = str(vals[5]).strip() if pd.notna(vals[5]) else ""
@@ -115,7 +117,7 @@ def process_excel(file_path):
 
             records.append({
                 "type": "उधारी",
-                "row_no": "N/A",
+                # "row_no": "N/A",
                 "raw_name": raw_name,
                 "name_clean": name_clean,
                 "village": village,

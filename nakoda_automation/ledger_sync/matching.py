@@ -114,9 +114,10 @@ def resolve_customer(record, existing_customers):
             vname = str(village).strip()
             if not frappe.db.exists("Village", vname):
                 try:
-                    vdoc = frappe.new_doc("Village")
-                    vdoc.village_name = vname
-                    vdoc.insert(ignore_permissions=True)
+                    # vdoc = frappe.new_doc("Village")
+                    # vdoc.village_name = vname
+                    # vdoc.insert(ignore_permissions=True)
+                    pass
                 except: pass
             doc.custom_village = vname
             changed = True
