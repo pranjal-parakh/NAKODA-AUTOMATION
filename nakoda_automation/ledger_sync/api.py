@@ -148,19 +148,6 @@ def parse_excel_ledger():
                 "tenure_months": rec.get("tenure_months", 0)
             })
             
-        # As we lost `tenure_months` from the row dictionary, let's just save it to string or message for now
-        # Actually better to save all records json into processing log and we can retrieve it during posting.
-        ledger_day.processing_log = json.dumps({"records": records, "log": "Parsed perfectly."}, indent=4, ensure_ascii=False)
-        ledger_day.total_udhaari = total_udhaari
-        ledger_day.total_jama = total_jama
-        
-        # Bypass link validation to allow friendly names in the customer columns as requested
-        ledger_day.flags.ignore_links = True
-        ledger_day.flags.ignore_permissions = True
-        
-        ledger_day.save()
-        frappe.db.commit()
-        
         duration = round(time.perf_counter() - start_time, 2)
         total_rows = len(records)
         matched_udhaari = sum(1 for r in records if r.get("type") == "\u0909\u0927\u093e\u0930\u0940" and r.get("_customer_id"))
@@ -170,7 +157,7 @@ def parse_excel_ledger():
         
         # ── Summary header ───────────────────────────────────────────────────
         success_msg  = f"<b>Extraction Completed in {duration}s</b><br>"
-        success_msg += f"<span style='font-size:0.85rem;color:#888;'>Total: {total_rows} records &nbsp;|&nbsp; "
+        success_msg += f"<span style='font-size:0.95rem;color:#888;'>Total: {total_rows} records &nbsp;|&nbsp; "
         success_msg += f"\u091c\u092e\u093e: {len(jm_records)} ({matched_jama} mapped, {skipped_jama} unmatched) &nbsp;|&nbsp; "
         success_msg += f"\u0909\u0927\u093e\u0930\u0940: {len(ud_records)} ({matched_udhaari} mapped, {skipped_udhaari} unmatched)"
         if customers_created > 0:
@@ -186,16 +173,16 @@ def parse_excel_ledger():
             tbl  = f"<br><br><b>{emoji} {title}</b>"
             tbl += "<div style='overflow-x:auto;width:100%;'>"
             tbl += (
-                "<table style='width:100%;border-collapse:collapse;font-size:0.72rem;margin-top:6px;white-space:nowrap;'>"
+                "<table style='width:100%;border-collapse:collapse;font-size:0.88rem;margin-top:8px;white-space:nowrap;'>"
                 "<thead><tr>"
-                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>#</th>"
-                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Raw Name</th>"
-                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Raw Village</th>"
-                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Village</th>"
-                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Matched Customer</th>"
-                "<th style='padding:4px 6px;text-align:left;border:1px solid #ccc;'>Via</th>"
-                "<th style='padding:4px 6px;text-align:center;border:1px solid #ccc;'>Score</th>"
-                "<th style='padding:4px 6px;text-align:right;border:1px solid #ccc;'>Amount</th>"
+                "<th style='padding:6px 8px;text-align:left;border:1px solid #ccc;'>#</th>"
+                "<th style='padding:6px 8px;text-align:left;border:1px solid #ccc;'>Raw Name</th>"
+                "<th style='padding:6px 8px;text-align:left;border:1px solid #ccc;'>Raw Village</th>"
+                "<th style='padding:6px 8px;text-align:left;border:1px solid #ccc;'>Village</th>"
+                "<th style='padding:6px 8px;text-align:left;border:1px solid #ccc;'>Matched Customer</th>"
+                "<th style='padding:6px 8px;text-align:left;border:1px solid #ccc;'>Via</th>"
+                "<th style='padding:6px 8px;text-align:center;border:1px solid #ccc;'>Score</th>"
+                "<th style='padding:6px 8px;text-align:right;border:1px solid #ccc;'>Amount</th>"
                 "</tr></thead><tbody>"
             )
             total_amt = 0
@@ -203,9 +190,7 @@ def parse_excel_ledger():
                 md      = r.get("_match_details") or {}
                 matched = bool(r.get("_customer_id"))
                 cname   = r.get("_customer_name") or r.get("_customer_id") or "\u2014"
-                
                 raw_village = r.get("village") or "\u2014"
-                
                 m_village = md.get("matched_village") or ""
                 r_village = r.get("village") or ""
                 if matched and m_village:
@@ -218,9 +203,7 @@ def parse_excel_ledger():
                 raw_score = float(md.get("best_score") or md.get("score") or 0)
                 score_disp = f"{round(raw_score, 1)}%" if raw_score else "\u2014"
                 score_color = "green" if raw_score >= 70 else ("orange" if raw_score >= 40 else "red")
-                
                 via = md.get("matched_via") or ("V1 Fuzzy" if md.get("score") else ("\u2014" if matched else "No Match"))
-                
                 cname_disp = (
                     f"<b style='color:{score_color};'>{cname}</b>" if matched
                     else f"<span style='color:red;'>\u2718 Not Matched</span>"
@@ -231,24 +214,24 @@ def parse_excel_ledger():
                 
                 tbl += (
                     f"<tr>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{idx}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{r.get('raw_name','')}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{raw_village}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{vil_cell}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{cname_disp}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;'>{via}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;text-align:center;"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;'>{idx}</td>"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;'>{r.get('raw_name','')}</td>"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;'>{raw_village}</td>"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;'>{vil_cell}</td>"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;'>{cname_disp}</td>"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;'>{via}</td>"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;text-align:center;"
                     f"color:{score_color};font-weight:700;'>{score_disp}</td>"
-                    f"<td style='padding:3px 5px;border:1px solid #ccc;text-align:right;"
+                    f"<td style='padding:5px 8px;border:1px solid #ccc;text-align:right;"
                     f"font-weight:600;'>{amt}</td>"
                     f"</tr>"
                 )
             # Total footer row
             tbl += (
                 f"<tr>"
-                f"<td colspan='7' style='padding:6px 10px;border:1px solid #ccc;"
+                f"<td colspan='7' style='padding:8px 12px;border:1px solid #ccc;"
                 f"text-align:right;font-weight:700;'>Total</td>"
-                f"<td style='padding:6px 10px;border:1px solid #ccc;text-align:right;"
+                f"<td style='padding:8px 12px;border:1px solid #ccc;text-align:right;"
                 f"font-weight:700;'>\u20b9{total_amt:,.0f}</td>"
                 f"</tr>"
             )
@@ -260,7 +243,19 @@ def parse_excel_ledger():
         
         success_msg += build_txn_table(jama_recs,    "\u091c\u092e\u093e (Jama) Transactions",    "\U0001f4c8")
         success_msg += build_txn_table(udhaari_recs, "\u0909\u0927\u093e\u0930\u0940 (Udhaari) Transactions", "\U0001f4c9")
-
+        
+        # Save results to the document
+        ledger_day.processing_log = json.dumps({"records": records, "log": "Parsed perfectly."}, indent=4, ensure_ascii=False)
+        ledger_day.total_udhaari = total_udhaari
+        ledger_day.total_jama = total_jama
+        ledger_day.import_log = success_msg  # Store the HTML report
+        
+        # Bypass link validation to allow friendly names in the customer columns as requested
+        ledger_day.flags.ignore_links = True
+        ledger_day.flags.ignore_permissions = True
+        
+        ledger_day.save()
+        frappe.db.commit()
         
         return {"status": "success", "message": success_msg}
         

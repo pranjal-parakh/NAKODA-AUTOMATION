@@ -15,6 +15,7 @@
   "rows_processed",
   "rows_failed",
   "pending_amount",
+  "import_log",
   "amended_from"
  ],
  "fields": [
@@ -62,6 +63,12 @@
    "fieldname": "rows_failed",
    "fieldtype": "Int",
    "label": "Rows Failed"
+  },
+  {
+   "fieldname": "import_log",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Import Log"
   },
   {
    "fieldname": "ledger_rows",

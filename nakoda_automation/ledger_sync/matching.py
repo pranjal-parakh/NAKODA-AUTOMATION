@@ -95,20 +95,20 @@ def resolve_customer(record, existing_customers):
             existing_phone = str(doc.get("mobile_no") or "").strip()
             # If empty, just set it
             if not existing_phone:
-                doc.mobile_no = clean_phone
+                # doc.mobile_no = clean_phone
                 changed = True
-                phone_updated = True
+                # phone_updated = True
             else:
                 # Check if this exact number is already in the string (comma/space separated)
                 parts = [p.strip() for p in existing_phone.replace(",", " ").split() if p.strip()]
                 if clean_phone not in parts:
                     # Append it
                     # Ensure we don't exceed field limit (usually 140 or 255 depending on system, but Customer mobile_no is usually small)
-                    new_val = existing_phone + ", " + clean_phone
-                    if len(new_val) < 130: # Safe margin for standard mobile_no fields
-                        doc.mobile_no = new_val
+                    # new_val = existing_phone + ", " + clean_phone
+                    # if len(new_val) < 130: # Safe margin for standard mobile_no fields
+                        # doc.mobile_no = new_val
                         changed = True
-                        phone_updated = True
+                        # phone_updated = True
                     
         if village and not doc.custom_village:
             vname = str(village).strip()
