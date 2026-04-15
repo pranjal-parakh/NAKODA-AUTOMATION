@@ -315,8 +315,8 @@ def post_ledger_entries():
             raw_rec = list(filter(lambda r: r.get("type") == txn_type and str(r.get("row_no")) == str(row_ref), log_data.get("records", [])))
             original_rec = raw_rec[0] if raw_rec else {}
             
-            # Prefer original internal ID, fall back to row column
-            customer_id = original_rec.get("_customer_id") or row.customer
+            # Prefer row column (which can be corrected by user), fall back to original internal ID
+            customer_id = row.customer or original_rec.get("_customer_id")
             
             # Strictly honor the owner's selected date on the Ledger Day record
             posting_date = ledger_day.ledger_date
@@ -458,6 +458,88 @@ def records_exists(row_hash):
     check1 = frappe.db.exists("Sales Invoice", {"remarks": f"Hash:{row_hash}"})
     check2 = frappe.db.exists("Payment Entry", {"remarks": f"Hash:{row_hash}"})
     return bool(check1 or check2)
-
 def record_hash(row_hash, doctype, docname):
     frappe.db.set_value(doctype, docname, "remarks", f"Hash:{row_hash}")
+
+@frappe.whitelist()
+def update_customer_mapping(dashboard_id, row_index, customer_id):
+    """
+    Update the customer ID for a specific row in the Ledger Day.
+    Called from the Ledger Review UI.
+    """
+    try:
+        ledger_day = frappe.get_doc("Nakoda Ledger Day", dashboard_id)
+        
+        if ledger_day.rows_processed > 0:
+            frappe.throw(_("Cannot update mapping. Entries already posted."))
+            
+        # row_index is 0-based from JS
+        if int(row_index) >= len(ledger_day.ledger_rows):
+            frappe.throw(_("Invalid row index"))
+            
+        row = ledger_day.ledger_rows[int(row_index)]
+        
+        # Update values
+        customer_name = frappe.db.get_value("Customer", customer_id, "customer_name")
+        row.customer = customer_id
+        
+        # Update match info/details if possible to keep metadata consistent
+        try:
+            match_info = json.loads(row.match_info or "{}")
+            match_info["corrected"] = True
+            match_info["previous_customer"] = row.customer
+            row.match_info = json.dumps(match_info)
+        except:
+            pass
+            
+        ledger_day.flags.ignore_links = True
+        ledger_day.save()
+        frappe.db.commit()
+        
+        return {
+            "status": "success", 
+            "customer_id": customer_id, 
+            "customer_name": customer_name
+        }
+        
+    except Exception as e:
+        frappe.log_error("Update mapping failed")
+        return {"status": "error", "message": str(e)}
+
+@frappe.whitelist()
+def delete_ledger_row(dashboard_id, row_index):
+    """
+    Remove a specific row from the Ledger Day.
+    Called from the Ledger Review UI.
+    """
+    try:
+        ledger_day = frappe.get_doc("Nakoda Ledger Day", dashboard_id)
+        
+        if ledger_day.rows_processed > 0:
+            frappe.throw(_("Cannot delete row. Entries already posted."))
+            
+        if int(row_index) >= len(ledger_day.ledger_rows):
+            frappe.throw(_("Invalid row index"))
+            
+        row = ledger_day.ledger_rows[int(row_index)]
+        
+        # Deduct from totals before removing
+        from frappe.utils import flt
+        amt = flt(row.amount)
+        if row.transaction_type == "जमा":
+            ledger_day.total_jama = flt(ledger_day.total_jama) - amt
+        else:
+            ledger_day.total_udhaari = flt(ledger_day.total_udhaari) - amt
+            
+        # Delete row
+        ledger_day.ledger_rows.pop(int(row_index))
+        
+        ledger_day.flags.ignore_links = True
+        ledger_day.save()
+        frappe.db.commit()
+        
+        return {"status": "success"}
+        
+    except Exception as e:
+        frappe.log_error("Delete row failed")
+        return {"status": "error", "message": str(e)}
