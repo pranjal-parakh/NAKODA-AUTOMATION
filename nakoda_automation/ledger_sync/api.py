@@ -217,7 +217,7 @@ def parse_excel_ledger():
                 
                 raw_score = float(md.get("best_score") or md.get("score") or 0)
                 score_disp = f"{round(raw_score, 1)}%" if raw_score else "\u2014"
-                score_color = "green" if raw_score >= 70 else ("orange" if raw_score >= 30 else "red")
+                score_color = "green" if raw_score >= 70 else ("orange" if raw_score >= 40 else "red")
                 
                 via = md.get("matched_via") or ("V1 Fuzzy" if md.get("score") else ("\u2014" if matched else "No Match"))
                 

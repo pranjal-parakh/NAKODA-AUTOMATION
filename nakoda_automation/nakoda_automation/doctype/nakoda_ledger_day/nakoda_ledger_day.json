@@ -9,12 +9,12 @@
   "ledger_date",
   "excel_file",
   "use_v2_matching",
+  "ledger_rows",
   "total_udhaari",
   "total_jama",
-  "pending_amount",
   "rows_processed",
   "rows_failed",
-  "ledger_rows",
+  "pending_amount",
   "amended_from"
  ],
  "fields": [
@@ -84,7 +84,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-03-10 19:34:50.813635",
+ "modified": "2026-04-12 16:47:19.924214",
  "modified_by": "Administrator",
  "module": "Nakoda Automation",
  "name": "Nakoda Ledger Day",
