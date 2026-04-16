@@ -481,7 +481,7 @@ def update_customer_mapping(dashboard_id, row_index, customer_id):
         
         # Update values
         customer_name = frappe.db.get_value("Customer", customer_id, "customer_name")
-        row.customer = customer_id
+        row.customer = customer_name or customer_id
         
         # Update match info/details if possible to keep metadata consistent
         try:
@@ -542,4 +542,41 @@ def delete_ledger_row(dashboard_id, row_index):
         
     except Exception as e:
         frappe.log_error("Delete row failed")
+        return {"status": "error", "message": str(e)}
+
+@frappe.whitelist()
+def add_new_customer(customer_name, village=None, reference=None, pata=None, mobile_no=None):
+    """
+    Create a new customer and return its details.
+    """
+    try:
+        if village:
+            village = str(village).strip()
+            if not frappe.db.exists("Village", village):
+                vdoc = frappe.new_doc("Village")
+                vdoc.village_name = village
+                vdoc.insert(ignore_permissions=True)
+        
+        doc = frappe.new_doc("Customer")
+        doc.customer_name = customer_name
+        doc.custom_village = village
+        doc.reference_name = reference
+        doc.local_address = pata
+        doc.mobile_no = mobile_no
+        
+        # Default required fields for Customer if any
+        doc.customer_group = frappe.db.get_value("Customer Group", {"is_group": 0}, "name") or "All Customer Groups"
+        doc.territory = frappe.db.get_value("Territory", {"is_group": 0}, "name") or "All Territories"
+        doc.customer_type = "Individual"
+        
+        doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+        
+        return {
+            "status": "success",
+            "customer_id": doc.name,
+            "customer_name": doc.customer_name
+        }
+    except Exception as e:
+        frappe.log_error(title="Add Customer Failed", message=frappe.get_traceback())
         return {"status": "error", "message": str(e)}

@@ -7,7 +7,7 @@ class NakodaLedgerReview {
 		this.wrapper = $(wrapper);
 		this.page = frappe.ui.make_app_page({
 			parent: wrapper,
-			title: __(' जमा/उधारी समरी '),
+			title: __('Review:- नाकोड़ा जमा/उधार खाता'),
 			single_column: true
 		});
 		this.dashboard_id = frappe.get_route()[1];
@@ -57,7 +57,7 @@ class NakodaLedgerReview {
 			.customer-cell { cursor: pointer; }
 			.customer-cell:hover { background: #edf2f7; }
             
-            .delete-cell { color: #ccc; cursor: pointer; text-align: center; font-size: 14px; }
+            .delete-cell { color: #ccc; cursor: pointer; text-align: center; font-size: 18px; line-height: 1; }
             .delete-cell:hover { color: #dc3545; }
 			
 			.footer-help { position: fixed; bottom: 0; left: 0; right: 0; background: #343a40; color: white; padding: 6px 20px; font-size: 11px; display: flex; gap: 20px; z-index: 100; opacity: 0.9; }
@@ -94,7 +94,7 @@ class NakodaLedgerReview {
 		this.page.main.html(`
 			<div class="ledger-review-container">
 				<div class="review-header">
-					<div class="header-main">Extraction Completed</div>
+					<div class="header-main">Extraction Completed for ${frappe.datetime.str_to_user(this.ledger_day.ledger_date)}</div>
 					<div class="header-sub">
                         Total: ${total_records} records &nbsp;|&nbsp; 
                         जमा: ${jama_rows.length} (${matched_jama} mapped, ${unmatched_jama} unmatched) &nbsp;|&nbsp; 
@@ -137,6 +137,10 @@ class NakodaLedgerReview {
 			});
 		});
 
+		this.page.set_secondary_action(__('Add New Customer'), () => {
+			this.select_row_for_new_customer();
+		});
+
 		this.attach_events();
 		this.sync_focus();
 	}
@@ -156,7 +160,7 @@ class NakodaLedgerReview {
                             <th>Matched Customer</th>
                             <th width="120">Via</th>
                             <th width="80" class="text-center">Score</th>
-                            <th width="120" class="text-right">Amount</th>
+                             <th width="120" class="text-right">Amount</th>
                             <th width="30"></th>
                         </tr>
                     </thead>
@@ -297,6 +301,99 @@ class NakodaLedgerReview {
 		d.show();
 	}
 
+	open_add_customer_dialog(idx) {
+		const row = this.rows[idx];
+		const d = new frappe.ui.Dialog({
+			title: __('Add New Customer'),
+			fields: [
+				{
+					label: 'Customer Name',
+					fieldname: 'customer_name',
+					fieldtype: 'Data',
+					default: row.customer_name_raw,
+					reqd: 1
+				},
+				{
+					label: 'Village',
+					fieldname: 'village',
+					fieldtype: 'Link',
+					options: 'Village',
+					default: row.village || ''
+				},
+				{
+					label: 'Mobile No.',
+					fieldname: 'mobile_no',
+					fieldtype: 'Data'
+				},
+				{
+					label: 'Reference',
+					fieldname: 'reference',
+					fieldtype: 'Data'
+				},
+				{
+					label: 'Pata (Local Address)',
+					fieldname: 'pata',
+					fieldtype: 'Small Text'
+				}
+			],
+			primary_action_label: __('Add'),
+			primary_action: (values) => {
+				frappe.call({
+					method: 'nakoda_automation.ledger_sync.api.add_new_customer',
+					args: values,
+					callback: (r) => {
+						if (r.message && r.message.status === 'success') {
+							const customer_id = r.message.customer_id;
+							this.update_row_customer(idx, customer_id);
+							d.hide();
+						} else if (r.message && r.message.status === 'error') {
+							frappe.msgprint(r.message.message);
+						}
+					}
+				});
+			}
+		});
+		d.show();
+	}
+
+	select_row_for_new_customer() {
+		const options = this.rows
+			.filter(r => !r.customer)
+			.map(r => ({
+				label: `#${r.idx}: ${r.customer_name_raw} (${r.village || 'No Village'}) - ${format_currency(r.amount, 'INR', 0)}`,
+				value: r.idx - 1
+			}));
+
+		if (!options.length) {
+			this.rows.forEach(r => {
+				options.push({
+					label: `#${r.idx}: ${r.customer_name_raw} (${r.village || 'No Village'}) - ${format_currency(r.amount, 'INR', 0)}`,
+					value: r.idx - 1
+				});
+			});
+		}
+
+		const d = new frappe.ui.Dialog({
+			title: __('Select Transaction for New Customer'),
+			fields: [
+				{
+					label: 'Select Record',
+					fieldname: 'row_idx',
+					fieldtype: 'Select',
+					options: options,
+					reqd: 1,
+					default: this.current_focus_index
+				}
+			],
+			primary_action_label: __('Next'),
+			primary_action: (values) => {
+				d.hide();
+				this.open_add_customer_dialog(parseInt(values.row_idx));
+			}
+		});
+		d.show();
+	}
+
 	update_row_customer(idx, customer_id) {
 		frappe.call({
 			method: 'nakoda_automation.ledger_sync.api.update_customer_mapping',
@@ -308,7 +405,7 @@ class NakodaLedgerReview {
 			callback: (r) => {
 				if (r.message && r.message.status === 'success') {
 					const row = this.rows[idx];
-					row.customer = r.message.customer_id;
+					row.customer = r.message.customer_name || r.message.customer_id;
 					let md = JSON.parse(row.match_info || '{}');
 					md.corrected = true;
 					md.best_score = 100;
