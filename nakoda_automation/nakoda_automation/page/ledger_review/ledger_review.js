@@ -26,6 +26,14 @@ class NakodaLedgerReview {
 		await this.load_data();
 		this.render();
 		this.setup_keyboard_nav();
+
+		// Switch UI on resize (Device Mode toggle)
+		$(window).off('resize.ledger_review').on('resize.ledger_review', () => {
+			if (this.last_width !== window.innerWidth) {
+				this.last_width = window.innerWidth;
+				this.render();
+			}
+		});
 	}
 
 	setup_styles() {
@@ -64,6 +72,30 @@ class NakodaLedgerReview {
 			.kbd-pill { background: #495057; padding: 1px 5px; border-radius: 3px; font-family: monospace; border: 1px solid #6c757d; }
 			
 			.total-row td { padding: 8px 12px; border: 1px solid #ccc; font-weight: 700; }
+			
+			/* Mobile Styles */
+			.mobile-review-shell { display: flex; flex-direction: column; background: #fafafa; margin: -15px; min-height: calc(100vh - 60px); }
+			.mobile-header { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; font-size: 1.1rem; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+			.m-type { border-radius: 4px; padding: 4px 10px; font-size: 0.95rem; }
+			.m-type.jama { background: #e6f4ea; color: #1e8e3e; }
+			.m-type.udhaari { background: #fce8e6; color: #d93025; }
+			.mobile-card { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 20px; }
+			.m-card-section { background: #fff; border-radius: 12px; padding: 18px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+			.m-title { font-size: 0.85rem; text-transform: uppercase; color: #888; margin-bottom: 10px; letter-spacing: 0.5px; font-weight: 600; }
+			.m-data { font-size: 1.15rem; color: #222; word-wrap: break-word; line-height: 1.4; }
+			.m-data.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+			
+			.mobile-actions { position: sticky; bottom: 85px; padding: 12px 15px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid rgba(0,0,0,0.1); display: flex; gap: 12px; z-index: 10; margin-top: auto; }
+			.m-btn { flex: 1; height: 48px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; border: none; cursor: pointer; }
+			.m-btn-primary { background: #4a90e2; color: #fff; }
+			.m-btn-secondary { background: #fff; color: #333; border: 1px solid #ccc; }
+			
+			.mobile-nav { display: none; position: sticky; bottom: 0; padding: 10px 15px 20px 15px; background: #fff; border-top: 1px solid #eee; justify-content: space-between; gap: 15px; z-index: 10;}
+            @media (max-width: 768px) {
+                .mobile-nav { display: flex; }
+            }
+			.m-nav-btn { flex: 1; height: 48px; border-radius: 8px; font-size: 1rem; background: #f8f9fa; border: 1px solid #ddd; font-weight: 600; color: #444; }
+			.m-nav-btn:disabled { opacity: 0.5; }
 		`;
 		if (!$('#ledger-review-styles').length) {
 			$('<style id="ledger-review-styles">').html(css).appendTo('head');
@@ -82,6 +114,15 @@ class NakodaLedgerReview {
 	}
 
 	render() {
+		const isMobile = window.innerWidth < 768 || 'ontouchstart' in window;
+		if (isMobile) {
+			this.renderMobileUI();
+		} else {
+			this.renderDesktopUI();
+		}
+	}
+
+	renderDesktopUI() {
 		const jama_rows = this.rows.filter(r => r.transaction_type === 'जमा');
 		const udhaari_rows = this.rows.filter(r => r.transaction_type === 'उधारी');
 
@@ -143,6 +184,151 @@ class NakodaLedgerReview {
 
 		this.attach_events();
 		this.sync_focus();
+	}
+
+	renderMobileUI() {
+		this.page.clear_primary_action();
+		this.page.clear_secondary_action();
+
+		if (this.rows.length === 0) {
+			this.page.main.html(`<div style="padding: 20px; text-align: center;">No records found</div>`);
+			return;
+		}
+
+		this.page.main.html(`
+			<div class="mobile-review-shell">
+				<div class="mobile-header">
+					<span class="m-index"></span>
+					<span class="m-type"></span>
+					<span class="m-amount"></span>
+				</div>
+				<div class="mobile-card" id="mobile-card-content">
+					<!-- Content populated via js -->
+				</div>
+				<div class="mobile-actions">
+					<button class="m-btn m-btn-secondary" id="m-btn-create">Create New</button>
+					<button class="m-btn m-btn-primary" id="m-btn-change">Change Match</button>
+				</div>
+				<div class="mobile-nav">
+					<button class="m-nav-btn" id="m-nav-prev">← Prev</button>
+					<button class="m-nav-btn" id="m-nav-next">Next →</button>
+				</div>
+			</div>
+		`);
+
+		this.setup_mobile_events();
+		this.updateMobileContent(this.current_focus_index);
+	}
+
+	updateMobileContent(idx) {
+		const row = this.rows[idx];
+		const md = JSON.parse(row.match_info || '{}');
+		const score = parseFloat(md.best_score || md.score || 0);
+		const score_class = score >= 70 ? 'score-high' : (score >= 40 ? 'score-medium' : 'score-low');
+		const matched = !!row.customer;
+		const is_corrected = md.corrected;
+
+		const m_vil = md.matched_village || "";
+		const r_vil = row.village || "";
+		let vil_html = '—';
+		if (matched && m_vil) vil_html = `<span style="color: green;">✔ ${m_vil}</span>`;
+		else if (r_vil) vil_html = `<span style="color: red;">✘ ${r_vil}</span>`;
+
+		// Update Header
+		$('.m-index').text(`[ ${idx + 1} / ${this.rows.length} ]`);
+		$('.m-type').text(row.transaction_type).removeClass('jama udhaari').addClass(row.transaction_type === 'जमा' ? 'jama' : 'udhaari');
+		$('.m-amount').text(format_currency(row.amount, 'INR', 0)).css('color', row.transaction_type === 'जमा' ? 'green' : 'red');
+
+		// Update Card
+		let match_display = `<div class="m-data truncate" style="color:${score_class === 'score-high' ? 'green' : (score_class === 'score-medium' ? 'orange' : 'red')}; font-weight: bold;">${row.customer}</div>`;
+		if (!matched) {
+			match_display = `<div class="m-data text-danger" style="color:red; font-weight:bold;">✘ Not Matched</div>`;
+		} else if (is_corrected) {
+			match_display = `<div class="m-data text-primary" style="font-weight: bold; color: #4a90e2;">${row.customer} <small style="color:#888;">(Manual)</small></div>`;
+		}
+
+		const html = `
+			<div class="m-card-section">
+				<div class="m-title">Excel Data</div>
+				<div class="m-data truncate" style="font-weight: 500;">${row.customer_name_raw}</div>
+				<div class="m-data" style="font-size: 0.95rem; color: #666; margin-top: 8px;">Village: <b>${row.village || '—'}</b></div>
+				<div class="m-data" style="font-size: 0.95rem; color: #666; margin-top: 4px;">Reference: <b>${row.reference || '—'}</b></div>
+			</div>
+
+			<div class="m-card-section">
+				<div class="m-title">Matched Customer</div>
+				${match_display}
+				<div class="m-data" style="font-size: 0.95rem; margin-top: 8px;">Village Match: ${vil_html}</div>
+			</div>
+
+			<div class="m-card-section">
+				<div class="m-title">Match Info</div>
+				<div class="m-data" style="font-size: 0.95rem;">
+					Score: <span class="${score_class}">${score ? score.toFixed(1) + '%' : '—'}</span> <br>
+					Via: <b>${md.matched_via || (matched ? 'Manual' : 'No Match')}</b>
+				</div>
+			</div>
+		`;
+
+		$('#mobile-card-content').html(html);
+
+		// Update buttons state
+		$('#m-nav-prev').prop('disabled', idx === 0);
+		$('#m-nav-next').prop('disabled', idx === this.rows.length - 1);
+		
+		// Scroll to top
+		$('.mobile-card').scrollTop(0);
+	}
+
+	setup_mobile_events() {
+		const me = this;
+		$('#m-btn-create').off('click').on('click', () => {
+			me.open_add_customer_dialog(me.current_focus_index);
+		});
+		
+		$('#m-btn-change').off('click').on('click', () => {
+			me.open_customer_search(me.current_focus_index);
+		});
+		
+		$('#m-nav-prev').off('click').on('click', () => {
+			if (me.current_focus_index > 0) {
+				me.current_focus_index--;
+				me.updateMobileContent(me.current_focus_index);
+			}
+		});
+		
+		$('#m-nav-next').off('click').on('click', () => {
+			if (me.current_focus_index < me.rows.length - 1) {
+				me.current_focus_index++;
+				me.updateMobileContent(me.current_focus_index);
+			}
+		});
+
+		// Swipe Interactions
+		let touchstartX = 0;
+		let touchendX = 0;
+		const slider = document.getElementById('mobile-card-content');
+		if (!slider) return;
+
+		slider.addEventListener('touchstart', e => {
+			touchstartX = e.changedTouches[0].screenX;
+		}, { passive: true });
+
+		slider.addEventListener('touchend', e => {
+			touchendX = e.changedTouches[0].screenX;
+			handleGesture();
+		}, { passive: true });
+
+		function handleGesture() {
+			if (touchendX < touchstartX - 50) {
+				// Swipe Left -> Next
+				$('#m-nav-next').click();
+			}
+			if (touchendX > touchstartX + 50) {
+				// Swipe Right -> Prev
+				$('#m-nav-prev').click();
+			}
+		}
 	}
 
 	render_table(rows, id) {
@@ -439,6 +625,12 @@ class NakodaLedgerReview {
 	}
 
 	refresh_row_ui(idx) {
+		const isMobile = window.innerWidth < 768 || 'ontouchstart' in window;
+		if (isMobile) {
+			this.updateMobileContent(idx);
+			return;
+		}
+
 		const row = this.rows[idx];
 		const $row = this.wrapper.find(`.row-item[data-idx="${idx}"]`);
 		$row.addClass('corrected');

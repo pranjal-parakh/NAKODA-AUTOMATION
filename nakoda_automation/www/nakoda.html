@@ -587,27 +587,169 @@
         font-size: 14px;
         user-select: none;
     }
-</style>
 
+    .mobile-bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-main);
+        padding: 10px 0;
+        justify-content: space-around;
+        z-index: 9999;
+        box-shadow: 0 -4px 20px var(--shadow);
+    }
+
+    /* Mobile Cleanup */
+    @media (max-width: 768px) {
+        .mobile-bottom-nav {
+            display: flex;
+        }
+
+        .nakoda-app {
+            padding: 12px;
+            padding-bottom: 80px;
+        }
+
+        .glass-nav {
+            padding: 12px 15px;
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--bg-card) !important;
+            border-bottom: 1px solid var(--border-main);
+        }
+
+        .nav-title {
+            font-size: 1.1rem;
+            white-space: normal !important;
+            line-height: 1.2;
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .metric-value {
+            font-size: 1.4rem;
+        }
+
+        .glass-card {
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .row>[class*="col-"] {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        /* Metrics row split */
+        #view-dashboard .row:nth-child(2)>.col-md-3 {
+            width: 50% !important;
+            float: left;
+        }
+
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -15px;
+            padding: 0 15px;
+        }
+
+        .dashboard-table {
+            min-width: 500px;
+            font-size: 0.85rem;
+        }
+
+        .profile-header-main {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+
+        .profile-stats-row {
+            flex-wrap: wrap;
+            margin-top: 15px;
+            border-top: 1px solid var(--border-light);
+            padding-top: 15px;
+            width: 100%;
+        }
+
+        .profile-stat-item {
+            flex: 1;
+            border-right: 1px solid var(--border-light) !important;
+            padding: 0 10px !important;
+            margin-bottom: 10px;
+        }
+
+        .profile-stat-item:last-child {
+            border-right: none !important;
+        }
+
+        .profile-stat-item .metric-value {
+            font-size: 1.1rem !important;
+        }
+
+        .nav-item {
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 0.7rem;
+            text-decoration: none !important;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--accent-orange);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+    }
+</style>
 <!-- Navbar -->
 <div class="glass-nav">
-    <div class="d-flex align-items-center" style="gap: 30px; flex-wrap: nowrap;">
-        <div class="nav-title" onclick="app.showDashboard()" style="white-space: nowrap;">नाकोड़ा उतई उधारी खाता</div>
-        <div class="nav-buttons d-flex align-items-center" style="gap: 12px; flex-wrap: nowrap;">
+    <div class="d-flex align-items-center justify-content-between" style="width: 100%; gap: 10px;">
+        <div class="nav-title" onclick="app.showDashboard()">नाकोड़ा उतई उधारी खाता</div>
+        <div class="nav-buttons d-none d-md-flex" style="gap: 12px;">
             <button class="btn-glass" onclick="app.showCustomerList()">👤 Customers </button>
             <button class="btn-glass" onclick="app.showVillageLedger()">🏘️ Village Ledger</button>
             <button class="btn-glass" onclick="window.location.href='/app'"> Back to ERP Desk</button>
         </div>
+        <div class="theme-switch-wrapper d-none d-md-flex">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" onchange="app.toggleTheme()" />
+                <div class="slider">
+                    <span class="icon">🌙</span>
+                    <span class="icon">☀️</span>
+                </div>
+            </label>
+        </div>
     </div>
-    <div class="theme-switch-wrapper">
-        <label class="theme-switch" for="checkbox">
-            <input type="checkbox" id="checkbox" onchange="app.toggleTheme()" />
-            <div class="slider">
-                <span class="icon">🌙</span>
-                <span class="icon">☀️</span>
-            </div>
-        </label>
-    </div>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<div class="mobile-bottom-nav">
+    <a href="javascript:void(0)" class="nav-item m-nav-home active" onclick="app.showDashboard()">
+        <i class="fa fa-home"></i> Dashboard
+    </a>
+    <a href="javascript:void(0)" class="nav-item m-nav-village" onclick="app.showVillageLedger()">
+        <i class="fa fa-map-marker"></i> Village
+    </a>
+    <a href="javascript:void(0)" class="nav-item m-nav-customers" onclick="app.showCustomerList()">
+        <i class="fa fa-users"></i> Customers
+    </a>
+    <a href="javascript:void(0)" class="nav-item m-nav-erp" onclick="window.location.href='/app'">
+        <i class="fa fa-external-link"></i> ERP
+    </a>
+    <a href="javascript:void(0)" class="nav-item m-nav-mode" onclick="document.getElementById('checkbox').click()">
+        <i class="fa fa-moon-o"></i> Mode
+    </a>
 </div>
 
 <div class="nakoda-app">
@@ -677,18 +819,20 @@
             <div class="col-md-12">
                 <div class="glass-card">
                     <div class="metric-label" style="margin-bottom: 15px;">Recent Transactions</div>
-                    <table class="dashboard-table" id="recent-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Customer</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                                <th>ID</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                    <div class="table-scroll-wrapper">
+                        <table class="dashboard-table" id="recent-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>ID</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -704,7 +848,7 @@
         </div>
 
         <div class="glass-card">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center profile-header-main">
                 <div style="cursor: pointer;" onclick="app.showDashboard()">
                     <h2 id="cp-name" style="margin: 0; font-weight: 800;">Loading...</h2>
                     <div id="cp-ref-addr"
@@ -713,21 +857,24 @@
                     <div id="cp-meta" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); opacity: 1;">
                         Village | Phone</div>
                 </div>
-                <div class="d-flex text-center">
-                    <div style="padding: 0 20px; border-right: 1px solid var(--border-light);">
-                        <div class="metric-label">Total Borrowed</div>
+                <div class="d-flex text-center profile-stats-row">
+                    <div class="profile-stat-item"
+                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                        <div class="metric-label">Borrowed</div>
                         <div class="metric-value" id="cp-borrowed" style="font-size: 1.5rem">₹ 0</div>
                     </div>
-                    <div style="padding: 0 20px; border-right: 1px solid var(--border-light);">
-                        <div class="metric-label">Total Repaid</div>
+                    <div class="profile-stat-item"
+                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                        <div class="metric-label">Repaid</div>
                         <div class="metric-value" id="cp-repaid" style="font-size: 1.5rem">₹ 0</div>
                     </div>
-                    <div style="padding: 0 20px; border-right: 1px solid var(--border-light);">
-                        <div class="metric-label">Current Outstanding</div>
+                    <div class="profile-stat-item"
+                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                        <div class="metric-label">Outstanding</div>
                         <div class="metric-value text-red" id="cp-outstanding" style="font-size: 1.5rem;">₹ 0</div>
                     </div>
-                    <div style="padding: 0 0 0 20px;">
-                        <div class="metric-label">Next Due</div>
+                    <div class="profile-stat-item" style="padding: 0 0 0 20px;">
+                        <div class="metric-label">Due</div>
                         <div class="metric-value" id="cp-due"
                             style="font-size: 1.3rem; margin-top: 14px; color: #f1c40f !important; -webkit-text-fill-color: #f1c40f;">
                             -</div>
@@ -736,23 +883,13 @@
             </div>
         </div>
 
-        <div class="row mt-4">
-            <div class="col-md-7">
-                <div class="glass-card mb-3">
-                    <div class="metric-label mb-3">Active Invoices (Outstanding)</div>
-                    <div id="invoice-list"></div>
-                    <div id="invoice-actions" class="text-center mt-2"></div>
-                </div>
-                <div class="glass-card">
-                    <div class="metric-label mb-4">Repayment Timeline</div>
-                    <div class="timeline-container" id="timeline-list"></div>
-                    <div id="timeline-actions" class="text-center mt-3"></div>
-                </div>
-            </div>
-            <div class="col-md-5">
+        <div class="row mt-2">
+            <!-- Order Priority: Ledger -> Timeline -> Invoices -> Trend -->
+            <div class="col-md-12">
+                <!-- 1. Transaction Ledger -->
                 <div class="glass-card">
                     <div class="metric-label mb-3">Customer Repayment Ledger</div>
-                    <div class="" style="overflow-x: auto;">
+                    <div class="table-scroll-wrapper">
                         <table class="dashboard-table" style="font-size: 0.75rem; margin-top: 5px;" id="ledger-table">
                             <thead>
                                 <tr style="background: transparent;">
@@ -765,8 +902,25 @@
                             <tbody></tbody>
                         </table>
                     </div>
+                </div>
 
-                    <div class="metric-label mt-4 mb-3">Repayment Pattern Trend</div>
+                <!-- 2. Repayment Timeline -->
+                <div class="glass-card">
+                    <div class="metric-label mb-4">Repayment Timeline</div>
+                    <div class="timeline-container" id="timeline-list"></div>
+                    <div id="timeline-actions" class="text-center mt-3"></div>
+                </div>
+
+                <!-- 3. Active Invoices -->
+                <div class="glass-card">
+                    <div class="metric-label mb-3">Active Invoices (Outstanding)</div>
+                    <div id="invoice-list"></div>
+                    <div id="invoice-actions" class="text-center mt-2"></div>
+                </div>
+
+                <!-- 4. Pattern Trend -->
+                <div class="glass-card">
+                    <div class="metric-label mb-3">Repayment Pattern Trend</div>
                     <div style="height: 250px;"><canvas id="repaymentChart"></canvas></div>
                 </div>
             </div>
@@ -805,18 +959,20 @@
                 <h3 style="margin: 0; font-weight: 800;" id="vl-table-title">Customer Data</h3>
                 <button class="btn-glass btn-sm" onclick="app.showVillageLedger()">✖ Clear Selection</button>
             </div>
-            <table class="dashboard-table" id="village-table">
-                <thead>
-                    <tr>
-                        <th>Customer Name</th>
-                        <th>Reference</th>
-                        <th>Outstanding</th>
-                        <th>Total Borrowed</th>
-                        <th>Last Payment</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="table-scroll-wrapper">
+                <table class="dashboard-table" id="village-table">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Reference</th>
+                            <th>Outstanding</th>
+                            <th>Total Borrowed</th>
+                            <th>Last Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -849,19 +1005,21 @@
 
         <div id="cl-list-container">
             <div class="glass-card">
-                <table class="dashboard-table" id="cl-table">
-                    <thead>
-                        <tr>
-                            <th>Customer Name</th>
-                            <th>Reference</th>
-                            <th>Village</th>
-                            <th>Outstanding</th>
-                            <th>Total Borrowed</th>
-                            <th>Last Payment</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-scroll-wrapper">
+                    <table class="dashboard-table" id="cl-table">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Reference</th>
+                                <th>Village</th>
+                                <th>Outstanding</th>
+                                <th>Total Borrowed</th>
+                                <th>Last Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -960,6 +1118,12 @@
             if (stateObj) {
                 history.pushState(stateObj, '');
             }
+
+            // Update mobile bottom nav active state
+            $('.mobile-bottom-nav .nav-item').removeClass('active');
+            if (viewId === 'dashboard') $('.m-nav-home').addClass('active');
+            else if (viewId === 'village') $('.m-nav-village').addClass('active');
+            else if (viewId === 'customers') $('.m-nav-customers').addClass('active');
         },
 
         formatMoney: function (amount) {
@@ -1003,11 +1167,11 @@
                     if (!r.message) return;
                     const data = r.message;
                     // Sort by outstanding for exposure chart
-                    const exposureData = [...data].sort((a,b) => b.outstanding - a.outstanding);
+                    const exposureData = [...data].sort((a, b) => b.outstanding - a.outstanding);
                     this.renderChart('villageChart', 'bar', exposureData.map(d => d.village || 'Unknown'), exposureData.map(d => d.outstanding), 'rgba(54, 162, 235, 0.8)');
-                    
+
                     // Sort by customer count for active customers chart
-                    const customerData = [...data].sort((a,b) => b.customer_count - a.customer_count);
+                    const customerData = [...data].sort((a, b) => b.customer_count - a.customer_count);
                     this.renderChart('villageCustChart', 'bar', customerData.map(d => d.village || 'Unknown'), customerData.map(d => d.customer_count), 'rgba(46, 204, 113, 0.8)');
                 }
             });

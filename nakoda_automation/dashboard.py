@@ -269,7 +269,35 @@ def export_customer_outstanding():
     from frappe.utils.xlsxutils import make_xlsx
     xlsx_file = make_xlsx([["Customer", "Village", "Outstanding"]] + [[d.customer_name, d.custom_village, d.outstanding] for d in data], "Customer Outstanding")
     
-    frappe.response['filename'] = f"Customer_Outstanding_{today()}.xlsx"
-    frappe.response['filecontent'] = xlsx_file.getvalue()
     frappe.response['type'] = 'binary'
+
+@frappe.whitelist()
+def get_account_receivables_report():
+    """Generates the Account Receivables report data using total net outstanding (Pending Amount)."""
+    data = frappe.db.sql("""
+        SELECT 
+            c.customer_name,
+            c.reference_name,
+            c.custom_village as village,
+            c.mobile_no as phone,
+            (SELECT SUM(debit - credit) 
+             FROM `tabGL Entry` 
+             WHERE party = c.name AND party_type = 'Customer' AND is_cancelled = 0) as amount_due,
+            DATEDIFF(CURDATE(), 
+                     (SELECT MAX(posting_date) FROM `tabGL Entry` 
+                      WHERE party = c.name AND party_type = 'Customer' AND is_cancelled = 0 AND credit > 0)
+            ) as days_since_last_payment,
+            DATEDIFF(CURDATE(), 
+                     (SELECT MIN(posting_date) FROM `tabGL Entry` 
+                      WHERE party = c.name AND party_type = 'Customer' AND is_cancelled = 0 AND debit > 0)
+            ) as age_days
+        FROM `tabCustomer` c
+        WHERE c.disabled = 0
+        HAVING amount_due > 0
+        ORDER BY c.custom_village ASC, amount_due DESC
+    """, as_dict=1)
+    
+    return data
+
+
 
