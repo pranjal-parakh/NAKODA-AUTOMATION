@@ -108,6 +108,14 @@
         transition: background 0.3s, border-color 0.3s;
     }
 
+    h1, h2, h3, .headline {
+        font-family: inherit;
+    }
+    
+    .mobile-only h1, .mobile-only h2, .mobile-only h3, .mobile-only .headline {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
     .nav-title {
         font-family: 'Yatra One', cursive;
         font-size: 2.2rem;
@@ -618,6 +626,7 @@
         .nakoda-app {
             padding: 12px;
             padding-bottom: 100px;
+            background-color: #ffffff !important;
         }
 
         .glass-nav {
@@ -627,8 +636,8 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: var(--bg-card) !important;
-            border-bottom: 1px solid var(--border-main);
+            background: #ffffff !important;
+            border-bottom: 1px solid #eeeeee;
             height: 60px;
             box-shadow: none;
         }
@@ -647,6 +656,26 @@
 
         .metric-value {
             font-size: 1.4rem;
+        }
+
+        .profile-stats-row {
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px 0;
+            width: 100%;
+        }
+
+        .profile-stat-item {
+            flex: 0 0 50% !important;
+            border: none !important;
+            padding: 10px !important;
+            margin: 0 !important;
+        }
+
+        .profile-header-main {
+            flex-direction: column;
+            text-align: center;
+            gap: 20px;
         }
 
         .glass-card {
@@ -817,9 +846,9 @@
         <!-- DASHBOARD MOBILE VERSION -->
         <div class="mobile-only space-y-8 pb-10">
             <!-- Hero Metrics -->
-            <section class="space-y-2">
-                <p class="text-on-surface-variant font-label text-sm font-medium">Total Outstanding</p>
-                <div class="flex items-baseline gap-1">
+            <section class="mb-4 text-center">
+                <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1 mb-2">Total Outstanding</h3>
+                <div class="flex items-baseline justify-center gap-1">
                     <h2 class="text-4xl font-black text-on-surface tracking-tight m-0" id="m-out-mobile">₹ 0</h2>
                 </div>
             </section>
@@ -998,44 +1027,36 @@
         </div>
 
         <div class="glass-card">
-            <div class="d-flex justify-content-between align-items-center profile-header-main">
-                <div style="cursor: pointer;" onclick="app.showDashboard()">
+            <div class="profile-header-main flex items-center justify-between">
+                <div style="cursor: pointer;" onclick="app.showDashboard()" class="mobile-text-center">
                     <h2 id="cp-name" style="margin: 0; font-weight: 800;">Loading...</h2>
-                    <div id="cp-ref-addr"
-                        style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); opacity: 1; display: none;">
-                    </div>
-                    <div id="cp-meta" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); opacity: 1;">
-                        Village | Phone</div>
+                    <div id="cp-ref-addr" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); display: none;"></div>
+                    <div id="cp-meta" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted);">Village | Phone</div>
                 </div>
-                <div class="d-flex text-center profile-stats-row">
-                    <div class="profile-stat-item"
-                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                <div class="profile-stats-row flex text-center">
+                    <div class="profile-stat-item" style="padding: 0 20px; border-right: 1px solid var(--border-light);">
                         <div class="metric-label">Borrowed</div>
-                        <div class="metric-value" id="cp-borrowed" style="font-size: 1.5rem">₹ 0</div>
+                        <div class="metric-value font-bold" id="cp-borrowed" style="font-size: 1.5rem">₹ 0</div>
                     </div>
-                    <div class="profile-stat-item"
-                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                    <div class="profile-stat-item" style="padding: 0 20px; border-right: 1px solid var(--border-light);">
                         <div class="metric-label">Repaid</div>
-                        <div class="metric-value" id="cp-repaid" style="font-size: 1.5rem">₹ 0</div>
+                        <div class="metric-value font-bold" id="cp-repaid" style="font-size: 1.5rem">₹ 0</div>
                     </div>
-                    <div class="profile-stat-item"
-                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                    <div class="profile-stat-item" style="padding: 0 20px; border-right: 1px solid var(--border-light);">
                         <div class="metric-label">Outstanding</div>
-                        <div class="metric-value text-red" id="cp-outstanding" style="font-size: 1.5rem;">₹ 0</div>
+                        <div class="metric-value text-red font-bold" id="cp-outstanding" style="font-size: 1.5rem;">₹ 0</div>
                     </div>
                     <div class="profile-stat-item" style="padding: 0 0 0 20px;">
                         <div class="metric-label">Due</div>
-                        <div class="metric-value" id="cp-due"
-                            style="font-size: 1.3rem; margin-top: 14px; color: #f1c40f !important; -webkit-text-fill-color: #f1c40f;">
-                            -</div>
+                        <div class="metric-value font-bold" id="cp-due" style="font-size: 1.3rem; margin-top: 5px; color: #f1c40f !important;">-</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row mt-2">
-            <!-- Order Priority: Ledger -> Timeline -> Invoices -> Trend -->
-            <div class="col-md-12">
+            <!-- Order Priority: Ledger -> Timeline -> Invoices -> Pattern -->
+            <div class="col-12">
                 <!-- 1. Transaction Ledger -->
                 <div class="glass-card">
                     <div class="metric-label mb-3">Customer Repayment Ledger</div>
@@ -1482,9 +1503,8 @@
                         
                         mobileList.append(`
                             <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
-                                <div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center font-black text-on-surface-variant text-sm flex-shrink-0">${initials}</div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-black text-on-surface truncate m-0">${row.customer}</p>
+                                    <p class="font-black text-on-surface truncate m-0 text-base">${row.customer}</p>
                                     <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
                                 </div>
                                 <div class="text-right flex-shrink-0">
