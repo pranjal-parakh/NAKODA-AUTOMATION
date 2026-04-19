@@ -4,7 +4,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Yatra+One&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Yatra+One&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
     /* Theme Variables */
     :root {
@@ -27,6 +28,12 @@
         --shadow-hover: rgba(0, 0, 0, 0.6);
         --accent-orange: #e67e22;
         --accent-orange-hover: #f39c12;
+        
+        /* Tactical Ledger Colors */
+        --primary: #8c5000;
+        --primary-container: #f2911b;
+        --secondary: #1b6d24;
+        --tertiary: #ba1a20;
     }
 
     html[data-theme="light"] {
@@ -610,26 +617,32 @@
 
         .nakoda-app {
             padding: 12px;
-            padding-bottom: 80px;
+            padding-bottom: 100px;
         }
 
         .glass-nav {
-            padding: 12px 15px;
-            border-radius: 0 0 15px 15px;
-            margin-bottom: 15px;
+            padding: 8px 15px;
+            border-radius: 0;
+            margin-bottom: 0px;
             position: sticky;
             top: 0;
             z-index: 1000;
             background: var(--bg-card) !important;
             border-bottom: 1px solid var(--border-main);
+            height: 60px;
+            box-shadow: none;
         }
 
         .nav-title {
-            font-size: 1.1rem;
-            white-space: normal !important;
+            font-size: 1.4rem !important;
+            font-weight: 800;
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
             line-height: 1.2;
             flex: 1;
-            margin-right: 10px;
+            margin: 0;
+            text-align: left;
         }
 
         .metric-value {
@@ -638,8 +651,9 @@
 
         .glass-card {
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 20px;
             margin-bottom: 15px;
+            box-shadow: 0 4px 12px var(--shadow);
         }
 
         .row>[class*="col-"] {
@@ -647,81 +661,119 @@
             padding-right: 8px;
         }
 
-        /* Metrics row split */
-        #view-dashboard .row:nth-child(2)>.col-md-3 {
-            width: 50% !important;
-            float: left;
-        }
-
-        .table-scroll-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin: 0 -15px;
-            padding: 0 15px;
-        }
-
-        .dashboard-table {
-            min-width: 500px;
-            font-size: 0.85rem;
-        }
-
-        .profile-header-main {
-            flex-direction: column;
-            align-items: flex-start !important;
-        }
-
-        .profile-stats-row {
-            flex-wrap: wrap;
-            margin-top: 15px;
-            border-top: 1px solid var(--border-light);
-            padding-top: 15px;
-            width: 100%;
-        }
-
-        .profile-stat-item {
-            flex: 1;
-            border-right: 1px solid var(--border-light) !important;
-            padding: 0 10px !important;
-            margin-bottom: 10px;
-        }
-
-        .profile-stat-item:last-child {
-            border-right: none !important;
-        }
-
-        .profile-stat-item .metric-value {
-            font-size: 1.1rem !important;
-        }
-
         .nav-item {
             color: var(--text-muted);
             text-align: center;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             text-decoration: none !important;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            transition: all 0.2s;
         }
 
         .nav-item.active {
-            color: var(--accent-orange);
+            background: var(--primary-fixed, #ffdcbf);
+            color: var(--primary);
         }
 
         .nav-item i {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
         }
+        
+        /* Hide Desktop sections on Mobile */
+        .desktop-only { display: none !important; }
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-only { display: none !important; }
     }
 </style>
-<!-- Navbar -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "secondary": "#1b6d24",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#2d1600",
+                    "inverse-primary": "#ffb873",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "surface-dim": "#d9dadb",
+                    "primary": "#8c5000",
+                    "outline-variant": "#dac2af",
+                    "surface-bright": "#f8f9fa",
+                    "on-tertiary-container": "#81000c",
+                    "outline": "#877363",
+                    "on-tertiary-fixed-variant": "#930010",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#ba1a20",
+                    "on-surface": "#191c1d",
+                    "on-primary": "#ffffff",
+                    "background": "#f8f9fa",
+                    "on-tertiary-fixed": "#410003",
+                    "inverse-surface": "#2e3132",
+                    "primary-container": "#f2911b",
+                    "surface-variant": "#e1e3e4",
+                    "on-secondary-container": "#217128",
+                    "on-primary-fixed-variant": "#6a3b00",
+                    "surface-container": "#edeeef",
+                    "on-secondary-fixed": "#002204",
+                    "secondary-container": "#a0f399",
+                    "tertiary-fixed-dim": "#ffb3ac",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed": "#a3f69c",
+                    "tertiary-container": "#ff847b",
+                    "on-surface-variant": "#544435",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-primary-container": "#5d3300",
+                    "secondary-fixed-dim": "#88d982",
+                    "primary-fixed": "#ffdcbf",
+                    "surface-container-low": "#f3f4f5",
+                    "on-secondary-fixed-variant": "#005312",
+                    "on-background": "#191c1d",
+                    "surface": "#f8f9fa",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#ffb873",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#8c5000"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+                "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "hindi": ["Noto Sans Devanagari"]
+                }
+            },
+        },
+        corePlugins: {
+            preflight: false,
+        }
+    }
+</script>
 <div class="glass-nav">
-    <div class="d-flex align-items-center justify-content-between" style="width: 100%; gap: 10px;">
-        <div class="nav-title" onclick="app.showDashboard()">नाकोड़ा उतई उधारी खाता</div>
+    <div class="d-flex align-items-center justify-content-between" style="width: 100%;">
+        <div class="nav-title" onclick="app.showDashboard()" style="font-family: 'Yatra One', cursive;">नाकोड़ा उतई उधारी खाता</div>
         <div class="nav-buttons d-none d-md-flex" style="gap: 12px;">
             <button class="btn-glass" onclick="app.showCustomerList()">👤 Customers </button>
             <button class="btn-glass" onclick="app.showVillageLedger()">🏘️ Village Ledger</button>
             <button class="btn-glass" onclick="window.location.href='/app'"> Back to ERP Desk</button>
         </div>
-        <div class="theme-switch-wrapper d-none d-md-flex">
+        <div class="theme-switch-wrapper d-none d-md-flex ml-4">
             <label class="theme-switch" for="checkbox">
                 <input type="checkbox" id="checkbox" onchange="app.toggleTheme()" />
                 <div class="slider">
@@ -736,19 +788,24 @@
 <!-- Mobile Bottom Navigation -->
 <div class="mobile-bottom-nav">
     <a href="javascript:void(0)" class="nav-item m-nav-home active" onclick="app.showDashboard()">
-        <i class="fa fa-home"></i> Dashboard
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
     </a>
-    <a href="javascript:void(0)" class="nav-item m-nav-village" onclick="app.showVillageLedger()">
-        <i class="fa fa-map-marker"></i> Village
+    <a href="javascript:void(0)" class="nav-item m-nav-directory" onclick="app.showCustomerList()">
+        <span class="material-symbols-outlined">group</span>
+        <span>Directory</span>
     </a>
-    <a href="javascript:void(0)" class="nav-item m-nav-customers" onclick="app.showCustomerList()">
-        <i class="fa fa-users"></i> Customers
+    <a href="javascript:void(0)" class="nav-item m-nav-villages" onclick="app.showVillageLedger()">
+        <span class="material-symbols-outlined">map</span>
+        <span>Villages</span>
     </a>
     <a href="javascript:void(0)" class="nav-item m-nav-erp" onclick="window.location.href='/app'">
-        <i class="fa fa-external-link"></i> ERP
+        <span class="material-symbols-outlined">rocket_launch</span>
+        <span>ERP</span>
     </a>
     <a href="javascript:void(0)" class="nav-item m-nav-mode" onclick="document.getElementById('checkbox').click()">
-        <i class="fa fa-moon-o"></i> Mode
+        <span class="material-symbols-outlined">contrast</span>
+        <span>Mode</span>
     </a>
 </div>
 
@@ -756,82 +813,175 @@
 
     <!-- VIEW: DASHBOARD -->
     <div id="view-dashboard" class="view-section active-view">
-        <div class="row">
-            <div class="col-md-9">
-                <input type="text" id="global-search" class="search-bar"
-                    placeholder="🔍 Search Customer by Name, Village, or Phone... (Press Enter)">
-            </div>
-            <div class="col-md-3 text-right">
-                <button class="btn-primary-glass" onclick="window.location.href='/app/nakoda-ledger-day'">➕ Upload
-                    Ledger</button>
-            </div>
+        
+        <!-- DASHBOARD MOBILE VERSION -->
+        <div class="mobile-only space-y-8 pb-10">
+            <!-- Hero Metrics -->
+            <section class="space-y-2">
+                <p class="text-on-surface-variant font-label text-sm font-medium">Total Outstanding</p>
+                <div class="flex items-baseline gap-1">
+                    <h2 class="text-4xl font-black text-on-surface tracking-tight m-0" id="m-out-mobile">₹ 0</h2>
+                </div>
+            </section>
+
+            <!-- Stats Grid -->
+            <section class="grid grid-cols-2 gap-4">
+                <div class="p-5 rounded-3xl bg-surface-container-low space-y-3">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                        <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+                    </div>
+                    <div>
+                        <p class="text-on-surface-variant font-black text-[10px] uppercase tracking-widest opacity-60">Jama Today</p>
+                        <p class="text-xl font-black text-secondary m-0" id="m-jam-mobile">₹ 0</p>
+                    </div>
+                </div>
+                <div class="p-5 rounded-3xl bg-surface-container-low space-y-3">
+                    <div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+                        <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+                    </div>
+                    <div>
+                        <p class="text-on-surface-variant font-black text-[10px] uppercase tracking-widest opacity-60">Udhaari Today</p>
+                        <p class="text-xl font-black text-tertiary m-0" id="m-udh-mobile">₹ 0</p>
+                    </div>
+                </div>
+                <div class="col-span-2 p-6 rounded-3xl bg-error-container/30 border border-error/5 flex justify-between items-center group">
+                    <div class="space-y-1">
+                        <p class="text-on-error-container font-black text-[10px] uppercase tracking-widest opacity-60">Total Overdue</p>
+                        <p class="text-2xl font-black text-tertiary m-0" id="m-ovr-mobile">₹ 0</p>
+                    </div>
+                    <button class="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-tertiary/20 active:scale-95 transition-transform">
+                        View List
+                    </button>
+                </div>
+            </section>
+
+            <!-- Search & Action -->
+            <section class="space-y-4">
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                    <input class="w-full bg-surface-container-highest border-none rounded-2xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary-container transition-all" placeholder="Search customer or transaction..." type="text" id="global-search-mobile"/>
+                </div>
+                <button class="w-full h-14 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-[0.98] transition-all" onclick="window.location.href='/app/nakoda-ledger-day'">
+                    <span class="material-symbols-outlined">cloud_upload</span>
+                    Upload Ledger
+                </button>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="space-y-8">
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Village wise exposure</h3>
+                    <div class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
+                        <div style="height: 200px;"><canvas id="villageChartMobile"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Village active customers</h3>
+                    <div class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
+                        <div style="height: 200px;"><canvas id="villageCustChartMobile"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Top Debtors</h3>
+                    <div class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
+                        <div style="height: 240px;"><canvas id="debtorChartMobile"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Transactions -->
+            <section class="space-y-4">
+                <div class="flex justify-between items-end px-1">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Recent Transactions</h3>
+                    <button class="text-primary font-black text-xs" onclick="app.showCustomerList()">View All</button>
+                </div>
+                <div id="recent-transactions-mobile" class="space-y-3">
+                    <!-- Dynamic Items -->
+                </div>
+            </section>
         </div>
 
-        <div class="row">
-            <div class="col-md-3">
-                <div class="glass-card">
-                    <div class="metric-label">Total Outstanding</div>
-                    <div class="metric-value" id="m-out">₹ 0</div>
+        <!-- DASHBOARD DESKTOP VERSION -->
+        <div class="desktop-only">
+            <div class="row">
+                <div class="col-md-9">
+                    <input type="text" id="global-search" class="search-bar"
+                        placeholder="🔍 Search Customer by Name, Village, or Phone... (Press Enter)">
+                </div>
+                <div class="col-md-3 text-right">
+                    <button class="btn-primary-glass" onclick="window.location.href='/app/nakoda-ledger-day'">➕ Upload
+                        Ledger</button>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="glass-card">
-                    <div class="metric-label">Udhaari Today</div>
-                    <div class="metric-value" id="m-udh">₹ 0</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="glass-card">
-                    <div class="metric-label">Jama Today</div>
-                    <div class="metric-value" id="m-jam">₹ 0</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="glass-card">
-                    <div class="metric-label">Total Overdue</div>
-                    <div class="metric-value" id="m-ovr" style="color:#ff6b6b !important">₹ 0</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row mt-3">
-            <div class="col-md-4">
-                <div class="glass-card" style="height: 400px;">
-                    <div class="metric-label">Village Wise Exposure</div>
-                    <div style="height: 320px;"><canvas id="villageChart"></canvas></div>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="glass-card">
+                        <div class="metric-label">Total Outstanding</div>
+                        <div class="metric-value" id="m-out">₹ 0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-card">
+                        <div class="metric-label">Udhaari Today</div>
+                        <div class="metric-value" id="m-udh">₹ 0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-card">
+                        <div class="metric-label">Jama Today</div>
+                        <div class="metric-value" id="m-jam">₹ 0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-card">
+                        <div class="metric-label">Total Overdue</div>
+                        <div class="metric-value" id="m-ovr" style="color:#ff6b6b !important">₹ 0</div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="glass-card" style="height: 400px;">
-                    <div class="metric-label">Village Active Customers</div>
-                    <div style="height: 320px;"><canvas id="villageCustChart"></canvas></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="glass-card" style="height: 400px;">
-                    <div class="metric-label">Top Debtors</div>
-                    <div style="height: 320px;"><canvas id="debtorChart"></canvas></div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <div class="glass-card">
-                    <div class="metric-label" style="margin-bottom: 15px;">Recent Transactions</div>
-                    <div class="table-scroll-wrapper">
-                        <table class="dashboard-table" id="recent-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Customer</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>ID</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <div class="glass-card" style="height: 400px;">
+                        <div class="metric-label">Village Wise Exposure</div>
+                        <div style="height: 320px;"><canvas id="villageChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card" style="height: 400px;">
+                        <div class="metric-label">Village Active Customers</div>
+                        <div style="height: 320px;"><canvas id="villageCustChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card" style="height: 400px;">
+                        <div class="metric-label">Top Debtors</div>
+                        <div style="height: 320px;"><canvas id="debtorChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="glass-card">
+                        <div class="metric-label" style="margin-bottom: 15px;">Recent Transactions</div>
+                        <div class="table-scroll-wrapper">
+                            <table class="dashboard-table" id="recent-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Customer</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1122,8 +1272,8 @@
             // Update mobile bottom nav active state
             $('.mobile-bottom-nav .nav-item').removeClass('active');
             if (viewId === 'dashboard') $('.m-nav-home').addClass('active');
-            else if (viewId === 'village') $('.m-nav-village').addClass('active');
-            else if (viewId === 'customers') $('.m-nav-customers').addClass('active');
+            else if (viewId === 'village') $('.m-nav-villages').addClass('active');
+            else if (viewId === 'customers') $('.m-nav-directory').addClass('active');
         },
 
         formatMoney: function (amount) {
@@ -1155,6 +1305,12 @@
                     $('#m-udh').text('₹ ' + this.formatMoney(m.today_udhaari));
                     $('#m-jam').text('₹ ' + this.formatMoney(m.today_jama));
                     $('#m-ovr').text('₹ ' + this.formatMoney(m.total_overdue));
+                    
+                    // Update mobile metrics
+                    $('#m-out-mobile').text('₹ ' + this.formatMoney(m.total_outstanding));
+                    $('#m-udh-mobile').text('₹ ' + this.formatMoney(m.today_udhaari));
+                    $('#m-jam-mobile').text('₹ ' + this.formatMoney(m.today_jama));
+                    $('#m-ovr-mobile').text('₹ ' + this.formatMoney(m.total_overdue));
                 }
             });
         },
@@ -1169,10 +1325,12 @@
                     // Sort by outstanding for exposure chart
                     const exposureData = [...data].sort((a, b) => b.outstanding - a.outstanding);
                     this.renderChart('villageChart', 'bar', exposureData.map(d => d.village || 'Unknown'), exposureData.map(d => d.outstanding), 'rgba(54, 162, 235, 0.8)');
+                    this.renderChart('villageChartMobile', 'bar', exposureData.map(d => d.village || 'Unknown'), exposureData.map(d => d.outstanding), 'rgba(54, 162, 235, 0.8)');
 
                     // Sort by customer count for active customers chart
                     const customerData = [...data].sort((a, b) => b.customer_count - a.customer_count);
                     this.renderChart('villageCustChart', 'bar', customerData.map(d => d.village || 'Unknown'), customerData.map(d => d.customer_count), 'rgba(46, 204, 113, 0.8)');
+                    this.renderChart('villageCustChartMobile', 'bar', customerData.map(d => d.village || 'Unknown'), customerData.map(d => d.customer_count), 'rgba(46, 204, 113, 0.8)');
                 }
             });
 
@@ -1182,6 +1340,8 @@
                     if (!r.message) return;
                     const data = r.message;
                     this.renderChart('debtorChart', 'doughnut', data.map(d => d.name), data.map(d => d.outstanding),
+                        ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff']);
+                    this.renderChart('debtorChartMobile', 'doughnut', data.map(d => d.name), data.map(d => d.outstanding),
                         ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff']);
                 }
             });
@@ -1264,9 +1424,9 @@
                         if (elements.length > 0) {
                             const idx = elements[0].index;
                             const label = chart.data.labels[idx];
-                            if (id === 'villageChart' || id === 'villageCustChart') {
+                            if (id === 'villageChart' || id === 'villageCustChart' || id === 'villageChartMobile' || id === 'villageCustChartMobile') {
                                 app.showVillageLedger(label);
-                            } else if (id === 'debtorChart') {
+                            } else if (id === 'debtorChart' || id === 'debtorChartMobile') {
                                 app.showCustomer(label);
                             }
                         }
@@ -1310,6 +1470,29 @@
                         </tr>
                     `);
                         tbody.append(tr);
+                    });
+
+                    const mobileList = $('#recent-transactions-mobile');
+                    mobileList.empty();
+                    r.message.slice(0, 10).forEach(row => {
+                        const initials = row.customer.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                        const colorStyle = row.type === 'Jama' ? 'color: #22c55e !important;' : 'color: #ba1a20 !important;';
+                        const badgeClass = row.type === 'Jama' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
+                        const typeLabel = row.type === 'Jama' ? 'जमा' : 'उधार';
+                        
+                        mobileList.append(`
+                            <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
+                                <div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center font-black text-on-surface-variant text-sm flex-shrink-0">${initials}</div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-black text-on-surface truncate m-0">${row.customer}</p>
+                                    <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <p class="font-black text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${badgeClass} uppercase tracking-[0.1em]">SUCCESS</span>
+                                </div>
+                            </div>
+                        `);
                     });
                 }
             });
