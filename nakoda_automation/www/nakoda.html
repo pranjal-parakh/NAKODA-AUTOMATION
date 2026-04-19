@@ -678,6 +678,17 @@
             gap: 20px;
         }
 
+        /* Responsive Layout Utilities */
+        @media (max-width: 767px) {
+            .mobile-contents {
+                display: contents !important;
+            }
+            .mobile-column-stack {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+        }
+
         .glass-card {
             padding: 15px;
             border-radius: 20px;
@@ -1054,11 +1065,28 @@
             </div>
         </div>
 
-        <div class="row mt-2">
-            <!-- Order Priority: Ledger -> Timeline -> Invoices -> Pattern -->
-            <div class="col-12">
-                <!-- 1. Transaction Ledger -->
-                <div class="glass-card">
+        <div class="row mt-2 mobile-column-stack">
+            <!-- Left Column: 60% Width for Desktop -->
+            <div class="col-md-7 mobile-contents">
+                <!-- 3. Active Invoices (Desktop: Top of Left Column, Mobile: 3rd) -->
+                <div class="glass-card order-3 order-md-1">
+                    <div class="metric-label mb-3">Active Invoices (Outstanding)</div>
+                    <div id="invoice-list"></div>
+                    <div id="invoice-actions" class="text-center mt-2"></div>
+                </div>
+
+                <!-- 2. Repayment Timeline (Desktop: Bottom of Left Column, Mobile: 2nd) -->
+                <div class="glass-card order-2 order-md-2">
+                    <div class="metric-label mb-4">Repayment Timeline</div>
+                    <div class="timeline-container" id="timeline-list"></div>
+                    <div id="timeline-actions" class="text-center mt-3"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: 40% Width for Desktop -->
+            <div class="col-md-5 mobile-contents">
+                <!-- 1. Transaction Ledger (Desktop: Top of Right Column, Mobile: 1st) -->
+                <div class="glass-card order-1 order-md-1">
                     <div class="metric-label mb-3">Customer Repayment Ledger</div>
                     <div class="table-scroll-wrapper">
                         <table class="dashboard-table" style="font-size: 0.75rem; margin-top: 5px;" id="ledger-table">
@@ -1075,22 +1103,8 @@
                     </div>
                 </div>
 
-                <!-- 2. Repayment Timeline -->
-                <div class="glass-card">
-                    <div class="metric-label mb-4">Repayment Timeline</div>
-                    <div class="timeline-container" id="timeline-list"></div>
-                    <div id="timeline-actions" class="text-center mt-3"></div>
-                </div>
-
-                <!-- 3. Active Invoices -->
-                <div class="glass-card">
-                    <div class="metric-label mb-3">Active Invoices (Outstanding)</div>
-                    <div id="invoice-list"></div>
-                    <div id="invoice-actions" class="text-center mt-2"></div>
-                </div>
-
-                <!-- 4. Pattern Trend -->
-                <div class="glass-card">
+                <!-- 4. Pattern Trend (Desktop: Bottom of Right Column, Mobile: 4th) -->
+                <div class="glass-card order-4 order-md-2">
                     <div class="metric-label mb-3">Repayment Pattern Trend</div>
                     <div style="height: 250px;"><canvas id="repaymentChart"></canvas></div>
                 </div>
