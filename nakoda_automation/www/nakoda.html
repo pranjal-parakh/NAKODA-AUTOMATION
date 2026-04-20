@@ -61,7 +61,7 @@
     body {
         background: var(--bg-main) !important;
         color: var(--text-main) !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'Inter', 'Yatra One', -apple-system, BlinkMacSystemFont, sans-serif !important;
         min-height: 100vh;
         margin: 0;
         transition: background 0.3s, color 0.3s;
@@ -119,7 +119,7 @@
     .mobile-only h2,
     .mobile-only h3,
     .mobile-only .headline {
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-family: 'Plus Jakarta Sans', 'Yatra One', sans-serif;
     }
 
     .nav-title {
@@ -636,7 +636,7 @@
         #m-udh-mobile,
         #m-ovr-mobile,
         #cp-name {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-family: 'Inter', 'Yatra One', -apple-system, BlinkMacSystemFont, sans-serif !important;
             font-weight: 800 !important;
         }
 
@@ -860,10 +860,10 @@
                     "full": "9999px"
                 },
                 "fontFamily": {
-                    "headline": ["Plus Jakarta Sans"],
+                    "headline": ["Plus Jakarta Sans", "Yatra One"],
                     "body": ["Inter"],
                     "label": ["Inter"],
-                    "hindi": ["Noto Sans Devanagari"]
+                    "hindi": ["Yatra One"]
                 }
             },
         },
@@ -1395,7 +1395,18 @@
         switchView: function (viewId, stateObj = null) {
             Object.values(this.views).forEach(el => el.classList.remove('active-view'));
             this.views[viewId].classList.add('active-view');
-            window.scrollTo(0, 0);
+            
+            const performScroll = () => {
+                window.scrollTo(0, 0);
+                document.body.scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            };
+
+            performScroll();
+            // Force scroll to top on mobile after a short delay to account for layout shifts
+            if (window.innerWidth <= 768) {
+                setTimeout(performScroll, 10);
+            }
 
             if (stateObj) {
                 history.pushState(stateObj, '');
