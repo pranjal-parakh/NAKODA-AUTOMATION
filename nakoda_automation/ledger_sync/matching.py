@@ -112,19 +112,19 @@ def resolve_customer(record, existing_customers):
                     
         if village and not doc.custom_village:
             vname = str(village).strip()
-            if not frappe.db.exists("Village", vname):
-                try:
-                    # vdoc = frappe.new_doc("Village")
-                    # vdoc.village_name = vname
-                    # vdoc.insert(ignore_permissions=True)
-                    pass
-                except: pass
-            doc.custom_village = vname
-            changed = True
-                    
+            # Use db_set to update the field directly in the DB, bypassing
+            # ERPNext's validate() pipeline (which enforces customer_group rules
+            # and can fail on existing data with Group-type customer groups).
+            doc.db_set("custom_village", vname, update_modified=False)
+            changed = False  # Already saved via db_set, no need to call doc.save()
+
         if changed:
-            doc.flags.ignore_permissions = True
-            doc.save()
+            try:
+                doc.flags.ignore_permissions = True
+                doc.flags.ignore_validate = True
+                doc.save()
+            except Exception as e:
+                frappe.log_error(f"Customer update skipped for {doc.name}: {e}", "Matching Warning")
             
         return matched_id, False, phone_updated, {"matched_via": "V1 Fuzzy", "score": score}
         
