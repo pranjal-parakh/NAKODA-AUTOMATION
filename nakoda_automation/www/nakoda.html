@@ -28,7 +28,7 @@
         --shadow-hover: rgba(0, 0, 0, 0.6);
         --accent-orange: #e67e22;
         --accent-orange-hover: #f39c12;
-        
+
         /* Tactical Ledger Colors */
         --primary: #8c5000;
         --primary-container: #f2911b;
@@ -108,11 +108,17 @@
         transition: background 0.3s, border-color 0.3s;
     }
 
-    h1, h2, h3, .headline {
+    h1,
+    h2,
+    h3,
+    .headline {
         font-family: inherit;
     }
-    
-    .mobile-only h1, .mobile-only h2, .mobile-only h3, .mobile-only .headline {
+
+    .mobile-only h1,
+    .mobile-only h2,
+    .mobile-only h3,
+    .mobile-only .headline {
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
@@ -618,6 +624,22 @@
 
     /* Mobile Cleanup */
     @media (max-width: 768px) {
+
+        html,
+        body {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        #m-out-mobile,
+        #m-jam-mobile,
+        #m-udh-mobile,
+        #m-ovr-mobile,
+        #cp-name {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-weight: 800 !important;
+        }
+
         .mobile-bottom-nav {
             display: flex;
         }
@@ -682,6 +704,7 @@
             .mobile-contents {
                 display: contents !important;
             }
+
             .mobile-column-stack {
                 display: flex !important;
                 flex-direction: column !important;
@@ -721,13 +744,58 @@
         .nav-item i {
             font-size: 1.4rem;
         }
-        
+
         /* Hide Desktop sections on Mobile */
-        .desktop-only { display: none !important; }
+        .desktop-only {
+            display: none !important;
+        }
     }
-    
+
     @media (min-width: 769px) {
-        .mobile-only { display: none !important; }
+        .mobile-only {
+            display: none !important;
+        }
+    }
+
+
+
+    @media (max-width: 768px) {
+
+        /* Remove outer app padding */
+        .nakoda-app {
+            padding: 0 !important;
+            padding-bottom: 100px !important;
+            /* keep bottom nav space */
+        }
+
+        #page-nakoda {
+            background-color: #ffffff !important;
+        }
+
+        /* Kill bootstrap row side spacing */
+        /* .row {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        } */
+
+        /* .row>[class*="col-"] {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        } */
+
+        /* Ensure full viewport usage */
+        /* body,
+        html {
+            width: 100%;
+            overflow-x: hidden;
+        } */
+
+        /* Prevent hidden container margins from frappe */
+        /* .container,
+        .container-fluid {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        } */
     }
 </style>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -806,7 +874,8 @@
 </script>
 <div class="glass-nav">
     <div class="d-flex align-items-center justify-content-between" style="width: 100%;">
-        <div class="nav-title" onclick="app.showDashboard()" style="font-family: 'Yatra One', cursive;">नाकोड़ा उतई उधारी खाता</div>
+        <div class="nav-title" onclick="app.showDashboard()" style="font-family: 'Yatra One', cursive;">नाकोड़ा उतई उधारी
+            खाता</div>
         <div class="nav-buttons d-none d-md-flex" style="gap: 12px;">
             <button class="btn-glass" onclick="app.showCustomerList()">👤 Customers </button>
             <button class="btn-glass" onclick="app.showVillageLedger()">🏘️ Village Ledger</button>
@@ -852,43 +921,53 @@
 
     <!-- VIEW: DASHBOARD -->
     <div id="view-dashboard" class="view-section active-view">
-        
+
         <!-- DASHBOARD MOBILE VERSION -->
         <div class="mobile-only space-y-8 pb-10">
             <!-- Hero Metrics -->
             <section class="mb-4 text-center">
-                <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1 mb-2">Total Outstanding</h3>
+                <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1 mb-2">Total
+                    Outstanding</h3>
                 <div class="flex items-baseline justify-center gap-1">
-                    <h2 class="text-4xl font-black text-on-surface tracking-tight m-0" id="m-out-mobile">₹ 0</h2>
+                    <h2 class="text-4xl font-extrabold text-on-surface tracking-tight m-0" id="m-out-mobile">₹ 0</h2>
                 </div>
             </section>
 
             <!-- Stats Grid -->
             <section class="grid grid-cols-2 gap-4">
                 <div class="p-5 rounded-3xl bg-surface-container-low space-y-3">
-                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
-                        <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
+                    <div
+                        class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                        <span class="material-symbols-outlined text-xl"
+                            style="font-variation-settings: 'FILL' 1;">arrow_downward</span>
                     </div>
                     <div>
-                        <p class="text-on-surface-variant font-black text-[10px] uppercase tracking-widest opacity-60">Jama Today</p>
-                        <p class="text-xl font-black text-secondary m-0" id="m-jam-mobile">₹ 0</p>
+                        <p class="text-on-surface-variant font-black text-[10px] uppercase tracking-widest opacity-60">
+                            Jama Today</p>
+                        <p class="text-xl font-extrabold text-secondary m-0" id="m-jam-mobile">₹ 0</p>
                     </div>
                 </div>
                 <div class="p-5 rounded-3xl bg-surface-container-low space-y-3">
-                    <div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
-                        <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+                    <div
+                        class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+                        <span class="material-symbols-outlined text-xl"
+                            style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
                     </div>
                     <div>
-                        <p class="text-on-surface-variant font-black text-[10px] uppercase tracking-widest opacity-60">Udhaari Today</p>
-                        <p class="text-xl font-black text-tertiary m-0" id="m-udh-mobile">₹ 0</p>
+                        <p class="text-on-surface-variant font-black text-[10px] uppercase tracking-widest opacity-60">
+                            Udhaari Today</p>
+                        <p class="text-xl font-extrabold text-tertiary m-0" id="m-udh-mobile">₹ 0</p>
                     </div>
                 </div>
-                <div class="col-span-2 p-6 rounded-3xl bg-error-container/30 border border-error/5 flex justify-between items-center group">
+                <div
+                    class="col-span-2 p-6 rounded-3xl bg-error-container/30 border border-error/5 flex justify-between items-center group">
                     <div class="space-y-1">
-                        <p class="text-on-error-container font-black text-[10px] uppercase tracking-widest opacity-60">Total Overdue</p>
-                        <p class="text-2xl font-black text-tertiary m-0" id="m-ovr-mobile">₹ 0</p>
+                        <p class="text-on-error-container font-black text-[10px] uppercase tracking-widest opacity-60">
+                            Total Overdue</p>
+                        <p class="text-2xl font-extrabold text-tertiary m-0" id="m-ovr-mobile">₹ 0</p>
                     </div>
-                    <button class="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-tertiary/20 active:scale-95 transition-transform">
+                    <button
+                        class="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-tertiary/20 active:scale-95 transition-transform">
                         View List
                     </button>
                 </div>
@@ -897,10 +976,15 @@
             <!-- Search & Action -->
             <section class="space-y-4">
                 <div class="relative group">
-                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-                    <input class="w-full bg-surface-container-highest border-none rounded-2xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary-container transition-all" placeholder="Search customer or transaction..." type="text" id="global-search-mobile"/>
+                    <span
+                        class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                    <input
+                        class="w-full bg-surface-container-highest border-none rounded-2xl py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary-container transition-all"
+                        placeholder="Search customer or transaction..." type="text" id="global-search-mobile" />
                 </div>
-                <button class="w-full h-14 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-[0.98] transition-all" onclick="window.location.href='/app/nakoda-ledger-day'">
+                <button
+                    class="w-full h-14 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+                    onclick="window.location.href='/app/nakoda-ledger-day'">
                     <span class="material-symbols-outlined">cloud_upload</span>
                     Upload Ledger
                 </button>
@@ -909,22 +993,28 @@
             <!-- Charts Section -->
             <section class="space-y-8">
                 <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Village wise exposure</h3>
-                    <div class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Village
+                        wise exposure</h3>
+                    <div
+                        class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
                         <div style="height: 200px;"><canvas id="villageChartMobile"></canvas></div>
                     </div>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Village active customers</h3>
-                    <div class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Village
+                        active customers</h3>
+                    <div
+                        class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
                         <div style="height: 200px;"><canvas id="villageCustChartMobile"></canvas></div>
                     </div>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Top Debtors</h3>
-                    <div class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] px-1">Top
+                        Debtors</h3>
+                    <div
+                        class="p-6 rounded-3xl bg-white shadow-[0px_8px_24px_rgba(25,28,29,0.04)] dark:bg-stone-900 border border-surface-container-high/20">
                         <div style="height: 240px;"><canvas id="debtorChartMobile"></canvas></div>
                     </div>
                 </div>
@@ -933,7 +1023,8 @@
             <!-- Recent Transactions -->
             <section class="space-y-4">
                 <div class="flex justify-between items-end px-1">
-                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Recent Transactions</h3>
+                    <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Recent
+                        Transactions</h3>
                     <button class="text-primary font-black text-xs" onclick="app.showCustomerList()">View All</button>
                 </div>
                 <div id="recent-transactions-mobile" class="space-y-3">
@@ -1040,25 +1131,32 @@
             <div class="profile-header-main flex items-center justify-between">
                 <div style="cursor: pointer;" onclick="app.showDashboard()" class="mobile-text-center">
                     <h2 id="cp-name" style="margin: 0; font-weight: 800;">Loading...</h2>
-                    <div id="cp-ref-addr" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); display: none;"></div>
-                    <div id="cp-meta" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted);">Village | Phone</div>
+                    <div id="cp-ref-addr"
+                        style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); display: none;"></div>
+                    <div id="cp-meta" style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted);">Village |
+                        Phone</div>
                 </div>
                 <div class="profile-stats-row flex text-center">
-                    <div class="profile-stat-item" style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                    <div class="profile-stat-item"
+                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
                         <div class="metric-label">Borrowed</div>
                         <div class="metric-value font-bold" id="cp-borrowed" style="font-size: 1.5rem">₹ 0</div>
                     </div>
-                    <div class="profile-stat-item" style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                    <div class="profile-stat-item"
+                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
                         <div class="metric-label">Repaid</div>
                         <div class="metric-value font-bold" id="cp-repaid" style="font-size: 1.5rem">₹ 0</div>
                     </div>
-                    <div class="profile-stat-item" style="padding: 0 20px; border-right: 1px solid var(--border-light);">
+                    <div class="profile-stat-item"
+                        style="padding: 0 20px; border-right: 1px solid var(--border-light);">
                         <div class="metric-label">Outstanding</div>
-                        <div class="metric-value text-red font-bold" id="cp-outstanding" style="font-size: 1.5rem;">₹ 0</div>
+                        <div class="metric-value text-red font-bold" id="cp-outstanding" style="font-size: 1.5rem;">₹ 0
+                        </div>
                     </div>
                     <div class="profile-stat-item" style="padding: 0 0 0 20px;">
                         <div class="metric-label">Due</div>
-                        <div class="metric-value font-bold" id="cp-due" style="font-size: 1.3rem; margin-top: 5px; color: #f1c40f !important;">-</div>
+                        <div class="metric-value font-bold" id="cp-due"
+                            style="font-size: 1.3rem; margin-top: 5px; color: #f1c40f !important;">-</div>
                     </div>
                 </div>
             </div>
@@ -1339,7 +1437,7 @@
                     $('#m-udh').text('₹ ' + this.formatMoney(m.today_udhaari));
                     $('#m-jam').text('₹ ' + this.formatMoney(m.today_jama));
                     $('#m-ovr').text('₹ ' + this.formatMoney(m.total_overdue));
-                    
+
                     // Update mobile metrics
                     $('#m-out-mobile').text('₹ ' + this.formatMoney(m.total_outstanding));
                     $('#m-udh-mobile').text('₹ ' + this.formatMoney(m.today_udhaari));
@@ -1513,15 +1611,15 @@
                         const colorStyle = row.type === 'Jama' ? 'color: #22c55e !important;' : 'color: #ba1a20 !important;';
                         const badgeClass = row.type === 'Jama' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
                         const typeLabel = row.type === 'Jama' ? 'जमा' : 'उधार';
-                        
+
                         mobileList.append(`
                             <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-black text-on-surface truncate m-0 text-base">${row.customer}</p>
+                                    <p class="font-extrabold text-on-surface truncate m-0 text-base">${row.customer}</p>
                                     <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
                                 </div>
                                 <div class="text-right flex-shrink-0">
-                                    <p class="font-black text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
+                                    <p class="font-extrabold text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
                                     <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${badgeClass} uppercase tracking-[0.1em]">SUCCESS</span>
                                 </div>
                             </div>
