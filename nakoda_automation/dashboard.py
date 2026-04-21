@@ -81,7 +81,10 @@ def get_top_debtors(limit=5):
 @frappe.whitelist()
 def get_recent_transactions(limit=10, start=0):
     """Unified chronological recent entries with names and pagination."""
-    return frappe.db.sql("""
+    # Use string interpolation for limit/offset because some MariaDB versions 
+    # fail when these are passed as quoted parameters via %s.
+    # Safe since we cast to int().
+    return frappe.db.sql(f"""
         SELECT * FROM (
             (SELECT si.name, si.posting_date, si.creation, 'Udhaari' as type, si.customer, c.customer_name, si.grand_total as amount
              FROM `tabSales Invoice` si
@@ -94,8 +97,8 @@ def get_recent_transactions(limit=10, start=0):
              WHERE pe.docstatus = 1 AND pe.party_type = 'Customer')
         ) AS combined
         ORDER BY posting_date DESC, creation DESC
-        LIMIT %s OFFSET %s
-    """, (int(limit), int(start)), as_dict=1)
+        LIMIT {int(limit)} OFFSET {int(start)}
+    """, as_dict=1)
 
 @frappe.whitelist()
 def get_customer_profile(customer_name):
