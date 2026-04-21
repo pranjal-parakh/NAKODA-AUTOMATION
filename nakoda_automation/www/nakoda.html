@@ -1030,6 +1030,9 @@
                 <div id="recent-transactions-mobile" class="space-y-3">
                     <!-- Dynamic Items -->
                 </div>
+                <div class="text-center mt-4">
+                    <button class="btn-glass w-full justify-center" id="load-more-recent-mobile" onclick="app.loadRecent(true)">Load More</button>
+                </div>
             </section>
         </div>
 
@@ -1111,6 +1114,9 @@
                                 </thead>
                                 <tbody></tbody>
                             </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button class="btn-glass" id="load-more-recent-desktop" onclick="app.loadRecent(true)">Load More</button>
                         </div>
                     </div>
                 </div>
@@ -1317,6 +1323,7 @@
         invoiceLimit: 2,
         fullLedger: [],
         fullInvoices: [],
+        recentStart: 0,
         init: function () {
             this.initTheme();
             this.cacheDom();
@@ -1593,32 +1600,47 @@
             });
         },
 
-        loadRecent: function () {
+        loadRecent: function (loadMore = false) {
+            if (!loadMore) {
+                this.recentStart = 0;
+                $('#recent-table tbody').empty();
+                $('#recent-transactions-mobile').empty();
+                $('#load-more-recent-mobile, #load-more-recent-desktop').show();
+            }
+
             frappe.call({
                 method: 'nakoda_automation.dashboard.get_recent_transactions',
+                args: {
+                    limit: 10,
+                    start: this.recentStart
+                },
                 callback: (r) => {
                     if (r.exc) console.error("Recent Err:", r.exc);
-                    if (!r.message) return;
-                    const tbody = $('#recent-table tbody');
-                    tbody.empty();
-                    r.message.forEach(row => {
-                        const badge = row.type === 'Jama' ? 'badge-jama' : 'badge-udhaari';
-                        const tr = $(`
-                        <tr onclick="app.showCustomer('${row.customer}')">
-                            <td>${this.formatDate(row.posting_date)}</td>
-                            <td><b>${row.customer}</b></td>
-                            <td><span class="${badge}">${row.type}</span></td>
-                            <td>₹ ${this.formatMoney(row.amount)}</td>
-                            <td style="opacity: 0.6; font-size: 0.8rem;">${row.name}</td>
-                        </tr>
-                    `);
-                        tbody.append(tr);
-                    });
+                    if (!r.message || r.message.length === 0) {
+                        $('#load-more-recent-mobile, #load-more-recent-desktop').hide();
+                        return;
+                    }
 
+                    const tbody = $('#recent-table tbody');
                     const mobileList = $('#recent-transactions-mobile');
-                    mobileList.empty();
-                    r.message.slice(0, 10).forEach(row => {
-                        const initials = row.customer.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+                    r.message.forEach(row => {
+                        const customerDisplay = row.customer_name || row.customer;
+                        const badge = row.type === 'Jama' ? 'badge-jama' : 'badge-udhaari';
+                        
+                        // Desktop Table
+                        const tr = $(`
+                            <tr onclick="app.showCustomer('${row.customer}')">
+                                <td>${this.formatDate(row.posting_date)}</td>
+                                <td class="font-bold">${customerDisplay}</td>
+                                <td><span class="${badge}">${row.type}</span></td>
+                                <td>₹ ${this.formatMoney(row.amount)}</td>
+                                <td style="opacity: 0.6; font-size: 0.8rem;">${row.name}</td>
+                            </tr>
+                        `);
+                        tbody.append(tr);
+
+                        // Mobile List
                         const colorStyle = row.type === 'Jama' ? 'color: #22c55e !important;' : 'color: #ba1a20 !important;';
                         const badgeClass = row.type === 'Jama' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
                         const typeLabel = row.type === 'Jama' ? 'जमा' : 'उधार';
@@ -1626,7 +1648,7 @@
                         mobileList.append(`
                             <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-extrabold text-on-surface truncate m-0 text-base">${row.customer}</p>
+                                    <p class="font-extrabold text-on-surface truncate m-0 text-base">${customerDisplay}</p>
                                     <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
                                 </div>
                                 <div class="text-right flex-shrink-0">
@@ -1636,6 +1658,13 @@
                             </div>
                         `);
                     });
+
+                    this.recentStart += r.message.length;
+                    if (r.message.length < 10) {
+                        $('#load-more-recent-mobile, #load-more-recent-desktop').hide();
+                    } else {
+                        $('#load-more-recent-mobile, #load-more-recent-desktop').show();
+                    }
                 }
             });
         },

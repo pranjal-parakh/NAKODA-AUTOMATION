@@ -79,31 +79,23 @@ def get_top_debtors(limit=5):
     """, (limit,), as_dict=1)
 
 @frappe.whitelist()
-def get_recent_transactions(limit=10):
-    """Unified chronological recent entries."""
-    # Fetch recent Sales Invoices (Udhaari)
-    invoices = frappe.db.sql("""
-        SELECT 
-            name, posting_date, 'Udhaari' as type, customer, grand_total as amount
-        FROM `tabSales Invoice`
-        WHERE docstatus = 1
-        ORDER BY posting_date DESC
-        LIMIT %s
-    """, (limit,), as_dict=1)
-
-    # Fetch recent Payment Entries (Jama)
-    payments = frappe.db.sql("""
-        SELECT 
-            name, posting_date, 'Jama' as type, party as customer, paid_amount as amount
-        FROM `tabPayment Entry`
-        WHERE docstatus = 1 AND party_type = 'Customer'
-        ORDER BY posting_date DESC
-        LIMIT %s
-    """, (limit,), as_dict=1)
-    
-    # Combined and sorted by transaction date (posting_date)
-    combined = sorted(list(invoices) + list(payments), key=lambda x: x['posting_date'], reverse=True)
-    return combined[:limit]
+def get_recent_transactions(limit=10, start=0):
+    """Unified chronological recent entries with names and pagination."""
+    return frappe.db.sql("""
+        SELECT * FROM (
+            (SELECT si.name, si.posting_date, si.creation, 'Udhaari' as type, si.customer, c.customer_name, si.grand_total as amount
+             FROM `tabSales Invoice` si
+             LEFT JOIN `tabCustomer` c ON si.customer = c.name
+             WHERE si.docstatus = 1)
+            UNION ALL
+            (SELECT pe.name, pe.posting_date, pe.creation, 'Jama' as type, pe.party as customer, c.customer_name, pe.paid_amount as amount
+             FROM `tabPayment Entry` pe
+             LEFT JOIN `tabCustomer` c ON pe.party = c.name
+             WHERE pe.docstatus = 1 AND pe.party_type = 'Customer')
+        ) AS combined
+        ORDER BY posting_date DESC, creation DESC
+        LIMIT %s OFFSET %s
+    """, (int(limit), int(start)), as_dict=1)
 
 @frappe.whitelist()
 def get_customer_profile(customer_name):
