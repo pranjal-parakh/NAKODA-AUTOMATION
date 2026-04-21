@@ -81,23 +81,22 @@ def get_top_debtors(limit=5):
 @frappe.whitelist()
 def get_recent_transactions(limit=10, start=0):
     """Unified chronological recent entries with names and pagination."""
-    # Use string interpolation for limit/offset because some MariaDB versions 
-    # fail when these are passed as quoted parameters via %s.
-    # Safe since we cast to int().
+    from frappe.utils import cint
+    l = cint(limit) or 10
+    s = cint(start) or 0
+    
     return frappe.db.sql(f"""
-        SELECT * FROM (
-            (SELECT si.name, si.posting_date, si.creation, 'Udhaari' as type, si.customer, c.customer_name, si.grand_total as amount
-             FROM `tabSales Invoice` si
-             LEFT JOIN `tabCustomer` c ON si.customer = c.name
-             WHERE si.docstatus = 1)
-            UNION ALL
-            (SELECT pe.name, pe.posting_date, pe.creation, 'Jama' as type, pe.party as customer, c.customer_name, pe.paid_amount as amount
-             FROM `tabPayment Entry` pe
-             LEFT JOIN `tabCustomer` c ON pe.party = c.name
-             WHERE pe.docstatus = 1 AND pe.party_type = 'Customer')
-        ) AS combined
+        SELECT si.name, si.posting_date, si.creation, 'Udhaari' as type, si.customer, c.customer_name, si.grand_total as amount
+        FROM `tabSales Invoice` si
+        LEFT JOIN `tabCustomer` c ON si.customer = c.name
+        WHERE si.docstatus = 1
+        UNION ALL
+        SELECT pe.name, pe.posting_date, pe.creation, 'Jama' as type, pe.party as customer, c.customer_name, pe.paid_amount as amount
+        FROM `tabPayment Entry` pe
+        LEFT JOIN `tabCustomer` c ON pe.party = c.name
+        WHERE pe.docstatus = 1 AND pe.party_type = 'Customer'
         ORDER BY posting_date DESC, creation DESC
-        LIMIT {int(limit)} OFFSET {int(start)}
+        LIMIT {l} OFFSET {s}
     """, as_dict=1)
 
 @frappe.whitelist()
