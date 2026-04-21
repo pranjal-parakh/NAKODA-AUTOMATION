@@ -12,21 +12,30 @@ def normalize_text(x):
 def extract_metadata(raw_name):
     # Default values
     tenure_months = 0
+    tenure_value = 0
+    tenure_unit = "माह" # Default unit
     internal_ref_code = ""
-    name_clean = raw_name
+    name_clean = str(raw_name) if raw_name else ""
 
-    if not isinstance(raw_name, str) or not raw_name:
-        return name_clean, tenure_months, internal_ref_code
+    if not raw_name or not isinstance(raw_name, str):
+        return name_clean, tenure_months, internal_ref_code, tenure_value, tenure_unit
 
-    # 1. Extract Tenure (e.g. "1 माह", "2 माह")
-    tenure_match = re.search(r'\((\d+)\s*माह\)', raw_name)
+    # 1. Extract Tenure (e.g. "1 माह", "2 माह", "2 सप्ताह", "5 दिन")
+    # Matches optional parenthesis, digits, optional space, then unit
+    tenure_match = re.search(r'\(?(\d+)\s*(माह|सप्ताह|दिन)\)?', name_clean)
     if tenure_match:
-        tenure_months = int(tenure_match.group(1))
-        # Remove from name
-        name_clean = re.sub(r'\(\d+\s*माह\)', '', name_clean)
+        tenure_value = int(tenure_match.group(1))
+        tenure_unit = tenure_match.group(2)
+        
+        # Removed matched part from name
+        name_clean = re.sub(r'\(?\d+\s*' + tenure_unit + r'\)?', '', name_clean)
+        
+        # Backward compatibility for tenure_months
+        if tenure_unit == "माह":
+            tenure_months = tenure_value
 
     # 2. Extract Internal Code (e.g. "(93)", "(60)")
-    # This regex looks for digits inside parentheses that are not right before "माह"
+    # This regex looks for digits inside parentheses that are not right before "माह/सप्ताह/दिन"
     code_matches = re.findall(r'\((\d+)\)', name_clean)
     if code_matches:
         internal_ref_code = code_matches[-1]
@@ -37,7 +46,7 @@ def extract_metadata(raw_name):
     # 3. Final Cleaning: Remove slashes and leading/trailing spaces
     name_clean = name_clean.replace("/", " ")
     name_clean = re.sub(r'\s+', ' ', name_clean).strip()
-    return name_clean, tenure_months, internal_ref_code
+    return name_clean, tenure_months, internal_ref_code, tenure_value, tenure_unit
 
 
 
@@ -110,7 +119,7 @@ def process_excel(file_path):
             if amount == 0.0:
                 continue
 
-            name_clean, tenure_months, internal_ref_code = extract_metadata(raw_name)
+            name_clean, tenure_months, internal_ref_code, tenure_val, tenure_unit = extract_metadata(raw_name)
 
             if DEBUG_EXCEL_IMPORT:
                 print(f"Parsed Udhaari -> bill_no: {bill_no}, raw_name: {raw_name}, village: {village}, amount: {amount}, phone: {phone}")
@@ -124,6 +133,8 @@ def process_excel(file_path):
                 "amount": amount,
                 "phone": phone,
                 "tenure_months": tenure_months,
+                "tenure_value": tenure_val,
+                "tenure_unit": tenure_unit,
                 "internal_ref_code": bill_no
             })
 

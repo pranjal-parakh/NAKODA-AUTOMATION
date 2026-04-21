@@ -90,42 +90,17 @@ def resolve_customer(record, existing_customers):
                 "match_score": score
             })
             
-        # 3.2 Phone Handling Rule: append if different
-        if clean_phone:
-            existing_phone = str(doc.get("mobile_no") or "").strip()
-            # If empty, just set it
-            if not existing_phone:
-                # doc.mobile_no = clean_phone
-                changed = True
-                # phone_updated = True
-            else:
-                # Check if this exact number is already in the string (comma/space separated)
-                parts = [p.strip() for p in existing_phone.replace(",", " ").split() if p.strip()]
-                if clean_phone not in parts:
-                    # Append it
-                    # Ensure we don't exceed field limit (usually 140 or 255 depending on system, but Customer mobile_no is usually small)
-                    # new_val = existing_phone + ", " + clean_phone
-                    # if len(new_val) < 130: # Safe margin for standard mobile_no fields
-                        # doc.mobile_no = new_val
-                        changed = True
-                        # phone_updated = True
-                    
+            
+        # 3.2 Phone Handling: DISABLED - updates commented out intentionally
+        # (clean_phone detection kept for future use but no doc.save() triggered)
+
         if village and not doc.custom_village:
             vname = str(village).strip()
-            # Use db_set to update the field directly in the DB, bypassing
-            # ERPNext's validate() pipeline (which enforces customer_group rules
-            # and can fail on existing data with Group-type customer groups).
+            # Use db_set to update directly in the DB, bypassing ERPNext's
+            # validate() pipeline (which can fail on customers with Group-type
+            # customer_group set in existing data).
             doc.db_set("custom_village", vname, update_modified=False)
-            changed = False  # Already saved via db_set, no need to call doc.save()
 
-        if changed:
-            try:
-                doc.flags.ignore_permissions = True
-                doc.flags.ignore_validate = True
-                doc.save()
-            except Exception as e:
-                frappe.log_error(f"Customer update skipped for {doc.name}: {e}", "Matching Warning")
-            
         return matched_id, False, phone_updated, {"matched_via": "V1 Fuzzy", "score": score}
         
     # NEW CUSTOMER CREATION DISABLED AS PER REQUEST (For both Udhaari and Jama)

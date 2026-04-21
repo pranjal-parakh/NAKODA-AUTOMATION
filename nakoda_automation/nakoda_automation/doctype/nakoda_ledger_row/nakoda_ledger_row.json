@@ -10,12 +10,15 @@
   "row_reference",
   "customer_name_raw",
   "customer",
+  "mobile_no",
   "amount",
   "status",
   "message",
   "village",
   "matched_village",
   "match_info",
+  "tenure_value",
+  "tenure_unit",
   "tenure_months"
  ],
  "fields": [
@@ -43,6 +46,12 @@
    "in_list_view": 1,
    "label": "Customer",
    "options": "Customer"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mobile No"
   },
   {
    "fieldname": "amount",
@@ -80,6 +89,17 @@
    "fieldname": "match_info",
    "fieldtype": "Small Text",
    "label": "Match Info"
+  },
+  {
+   "fieldname": "tenure_value",
+   "fieldtype": "Int",
+   "label": "Tenure Value"
+  },
+  {
+   "fieldname": "tenure_unit",
+   "fieldtype": "Select",
+   "label": "Tenure Unit",
+   "options": "\u092e\u093e\u0939\n\u0938\u092a\u094d\u0924\u093e\u0939\n\u0926\u093f\u0928"
   },
   {
    "columns": 1,

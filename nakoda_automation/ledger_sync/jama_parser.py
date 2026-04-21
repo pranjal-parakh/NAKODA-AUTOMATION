@@ -73,7 +73,7 @@ def parse_jama(file_path):
         if amount <= 0:
             continue
 
-        name_clean, tenure_months, internal_ref_code = extract_metadata(raw_name)
+        name_clean, tenure_months, internal_ref_code, tenure_val, tenure_unit = extract_metadata(raw_name)
 
         if DEBUG_JAMA_IMPORT:
             print(f"Parsed Jama -> raw_name: {raw_name}, village: {village}, amount: {amount}")
@@ -86,7 +86,9 @@ def parse_jama(file_path):
             "village": village,
             "amount": amount,
             # "phone": "",
-            # "tenure_months": "",
+            "tenure_months": tenure_months,
+            "tenure_value": tenure_val,
+            "tenure_unit": tenure_unit,
             "internal_ref_code": ""
         })
         

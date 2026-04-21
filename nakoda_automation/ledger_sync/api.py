@@ -72,6 +72,7 @@ def parse_excel_ledger():
             
             rec["_customer_id"] = matched_id
             rec["_customer_name"] = customer_display_name
+            m_details["customer_name"] = customer_display_name
             
             if is_new:
                 customers_created += 1
@@ -122,29 +123,28 @@ def parse_excel_ledger():
                 
             # Ensure village exists in our new Village DocType before appending to grid
             vname = str(rec.get("village", "")).strip()
-            if vname and vname not in ("None", "nan"):
-                if not frappe.db.exists("Village", vname):
-                    try:
-                        # vdoc = frappe.new_doc("Village")
-                        # vdoc.village_name = vname
-                        # vdoc.insert(ignore_permissions=True)
-                        new_villages.append(vname)
-                    except:
-                        pass
+            if vname and vname not in ("None", "nan") and frappe.db.exists("Village", vname):
+                # Valid village doc exists
+                pass
             else:
                 vname = None
 
             ledger_day.append("ledger_rows", {
                 "transaction_type": display_type,
                 "row_reference": rec.get("row_no", ""),
-                "customer": rec.get("_customer_name") or rec.get("_customer_id"),
+                # Store the Customer doc ID (name), NOT the display name.
+                # The customer field is a Link to Customer and requires the doc ID.
+                "customer": rec.get("_customer_id"),
                 "customer_name_raw": rec.get("raw_name"),
+                "mobile_no": rec.get("phone"),
                 "village": vname,
                 "amount": amt,
                 "status": status,
                 "message": msg,
                 "matched_village": rec.get("_match_details", {}).get("matched_village"),
                 "match_info": json.dumps(rec.get("_match_details", {}), indent=2, ensure_ascii=False),
+                "tenure_value": rec.get("tenure_value", 0),
+                "tenure_unit": rec.get("tenure_unit", "माह"),
                 "tenure_months": rec.get("tenure_months", 0)
             })
             
@@ -311,12 +311,27 @@ def post_ledger_entries():
             display_type = row.transaction_type
             txn_type = "Jama" if display_type == "जमा" else "Udhaari"
             
-            row_key = f"{txn_type}_{row_ref}_{row.customer_name_raw}"
             raw_rec = list(filter(lambda r: r.get("type") == txn_type and str(r.get("row_no")) == str(row_ref), log_data.get("records", [])))
             original_rec = raw_rec[0] if raw_rec else {}
             
-            # Prefer row column (which can be corrected by user), fall back to original internal ID
+            # row.customer is the Customer doc ID (Link field).
+            # If the user corrected it in Ledger Review, that correction takes supreme priority.
+            # Fall back to the original matched ID from the parse log.
             customer_id = row.customer or original_rec.get("_customer_id")
+            
+            # Resolve village and territory from the chosen customer record.
+            # This ensures corrections in Ledger Review are fully reflected.
+            if customer_id:
+                cust_doc = frappe.get_doc("Customer", customer_id)
+                customer_village = cust_doc.get("custom_village") or row.village or None
+                customer_territory = cust_doc.get("territory") or None
+                
+                # Check for mobile number and update if missing
+                if row.mobile_no and not cust_doc.mobile_no:
+                    cust_doc.db_set("mobile_no", row.mobile_no)
+            else:
+                customer_village = row.village or None
+                customer_territory = None
             
             # Strictly honor the owner's selected date on the Ledger Day record
             posting_date = ledger_day.ledger_date
@@ -336,10 +351,24 @@ def post_ledger_entries():
                         invoice.set_posting_time = 1
                         invoice.posting_date = posting_date
                         
-                        tenure = row.tenure_months or 0
-                        if tenure == 0:
-                            tenure = 2
-                        invoice.due_date = add_months(posting_date, tenure)
+                        # Calculate due date based on tenure value and unit
+                        from frappe.utils import add_days
+                        t_val = row.tenure_value or 0
+                        t_unit = row.tenure_unit or "माह"
+                        
+                        if t_val == 0:
+                            # Fallback to old behavior or default 3 months
+                            t_val = row.tenure_months or 3
+                            t_unit = "माह"
+                            
+                        if t_unit == "माह":
+                            invoice.due_date = add_months(posting_date, t_val)
+                        elif t_unit == "सप्ताह":
+                            invoice.due_date = add_days(posting_date, t_val * 7)
+                        elif t_unit == "दिन":
+                            invoice.due_date = add_days(posting_date, t_val)
+                        else:
+                            invoice.due_date = add_months(posting_date, 3) # Default fallback to 3 months
                             
                         if not frappe.db.exists("Item", "Udhaari Entry"):
                             item = frappe.new_doc("Item")
@@ -462,10 +491,10 @@ def record_hash(row_hash, doctype, docname):
     frappe.db.set_value(doctype, docname, "remarks", f"Hash:{row_hash}")
 
 @frappe.whitelist()
-def update_customer_mapping(dashboard_id, row_index, customer_id):
+def update_customer_mapping(dashboard_id, row_id, customer_id, mobile_no=None, tenure_value=None, tenure_unit=None):
     """
-    Update the customer ID for a specific row in the Ledger Day.
-    Called from the Ledger Review UI.
+    Update the customer mapping for a specific row in the Ledger Day.
+    Identified by the unique row_id (database name) for robustness.
     """
     try:
         ledger_day = frappe.get_doc("Nakoda Ledger Day", dashboard_id)
@@ -473,44 +502,73 @@ def update_customer_mapping(dashboard_id, row_index, customer_id):
         if ledger_day.rows_processed > 0:
             frappe.throw(_("Cannot update mapping. Entries already posted."))
             
-        # row_index is 0-based from JS
-        if int(row_index) >= len(ledger_day.ledger_rows):
-            frappe.throw(_("Invalid row index"))
+        # Find the specific row by its unique name (ID)
+        row = None
+        for r in ledger_day.ledger_rows:
+            if r.name == row_id:
+                row = r
+                break
+        
+        if not row:
+            frappe.throw(_("Row {0} not found").format(row_id))
             
-        row = ledger_day.ledger_rows[int(row_index)]
+        # Fetch the chosen customer's full details
+        cust_doc = frappe.get_doc("Customer", customer_id)
+        customer_name = cust_doc.customer_name
+        customer_village = cust_doc.get("custom_village") or None
         
-        # Update values
-        customer_name = frappe.db.get_value("Customer", customer_id, "customer_name")
-        row.customer = customer_name or customer_id
+        # Store the Customer doc ID (Link field requires this, not display name)
+        previous_customer = row.customer
+        row.customer = customer_id
         
-        # Update match info/details if possible to keep metadata consistent
+        if mobile_no is not None:
+            row.mobile_no = mobile_no
+        if tenure_value is not None:
+            row.tenure_value = int(tenure_value)
+        if tenure_unit is not None:
+            row.tenure_unit = tenure_unit
+        
+        # Sync village from chosen customer (selected customer is supreme)
+        if customer_village:
+            # Only set village link if Village doc exists (do not create automatically)
+            if frappe.db.exists("Village", customer_village):
+                row.village = customer_village
+            else:
+                row.village = None
+        else:
+            row.village = None
+        
+        # Update match info to reflect the manual correction
         try:
             match_info = json.loads(row.match_info or "{}")
             match_info["corrected"] = True
-            match_info["previous_customer"] = row.customer
+            match_info["corrected_from"] = previous_customer
+            match_info["corrected_to"] = customer_id
+            match_info["corrected_customer_name"] = customer_name
             row.match_info = json.dumps(match_info)
-        except:
+        except Exception:
             pass
             
         ledger_day.flags.ignore_links = True
+        ledger_day.flags.ignore_permissions = True
         ledger_day.save()
         frappe.db.commit()
         
         return {
             "status": "success", 
             "customer_id": customer_id, 
-            "customer_name": customer_name
+            "customer_name": customer_name,
+            "village": customer_village
         }
         
     except Exception as e:
-        frappe.log_error("Update mapping failed")
+        frappe.log_error("Update mapping failed", frappe.get_traceback())
         return {"status": "error", "message": str(e)}
 
 @frappe.whitelist()
-def delete_ledger_row(dashboard_id, row_index):
+def delete_ledger_row(dashboard_id, row_id):
     """
-    Remove a specific row from the Ledger Day.
-    Called from the Ledger Review UI.
+    Remove a specific row from the Ledger Day by its unique row_id.
     """
     try:
         ledger_day = frappe.get_doc("Nakoda Ledger Day", dashboard_id)
@@ -518,10 +576,17 @@ def delete_ledger_row(dashboard_id, row_index):
         if ledger_day.rows_processed > 0:
             frappe.throw(_("Cannot delete row. Entries already posted."))
             
-        if int(row_index) >= len(ledger_day.ledger_rows):
-            frappe.throw(_("Invalid row index"))
+        # Find row by name
+        target_idx = -1
+        for i, r in enumerate(ledger_day.ledger_rows):
+            if r.name == row_id:
+                target_idx = i
+                break
+        
+        if target_idx == -1:
+            frappe.throw(_("Row {0} not found").format(row_id))
             
-        row = ledger_day.ledger_rows[int(row_index)]
+        row = ledger_day.ledger_rows[target_idx]
         
         # Deduct from totals before removing
         from frappe.utils import flt
@@ -532,7 +597,7 @@ def delete_ledger_row(dashboard_id, row_index):
             ledger_day.total_udhaari = flt(ledger_day.total_udhaari) - amt
             
         # Delete row
-        ledger_day.ledger_rows.pop(int(row_index))
+        ledger_day.ledger_rows.pop(target_idx)
         
         ledger_day.flags.ignore_links = True
         ledger_day.save()

@@ -73,6 +73,11 @@ class NakodaLedgerReview {
 			
 			.total-row td { padding: 8px 12px; border: 1px solid #ccc; font-weight: 700; }
 			
+			.edit-input { width: 100%; border: 1px solid #ddd; padding: 2px 5px; border-radius: 3px; font-size: 0.85rem; }
+			.edit-input:focus { border-color: #4a90e2; outline: none; box-shadow: 0 0 0 2px rgba(74,144,226,0.2); }
+			.tenure-flex { display: flex; gap: 4px; align-items: center; }
+			.unit-select { width: 75px; background: #fff; }
+			
 			/* Mobile Styles */
 			.mobile-review-shell { display: flex; flex-direction: column; background: #fafafa; margin: -15px; min-height: calc(100vh - 60px); }
 			.mobile-header { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; font-size: 1.1rem; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -240,11 +245,12 @@ class NakodaLedgerReview {
 		$('.m-amount').text(format_currency(row.amount, 'INR', 0)).css('color', row.transaction_type === 'जमा' ? 'green' : 'red');
 
 		// Update Card
-		let match_display = `<div class="m-data truncate" style="color:${score_class === 'score-high' ? 'green' : (score_class === 'score-medium' ? 'orange' : 'red')}; font-weight: bold;">${row.customer}</div>`;
+		const display_name = md.corrected_customer_name || md.customer_name || row.customer;
+		let match_display = `<div class="m-data truncate" style="color:${score_class === 'score-high' ? 'green' : (score_class === 'score-medium' ? 'orange' : 'red')}; font-weight: bold;">${display_name}</div>`;
 		if (!matched) {
 			match_display = `<div class="m-data text-danger" style="color:red; font-weight:bold;">✘ Not Matched</div>`;
 		} else if (is_corrected) {
-			match_display = `<div class="m-data text-primary" style="font-weight: bold; color: #4a90e2;">${row.customer} <small style="color:#888;">(Manual)</small></div>`;
+			match_display = `<div class="m-data text-primary" style="font-weight: bold; color: #4a90e2;">${display_name} <small style="color:#888;">(Manual)</small></div>`;
 		}
 
 		const html = `
@@ -259,6 +265,17 @@ class NakodaLedgerReview {
 				<div class="m-title">Matched Customer</div>
 				${match_display}
 				<div class="m-data" style="font-size: 0.95rem; margin-top: 8px;">Village Match: ${vil_html}</div>
+			</div>
+
+			<div class="m-card-section">
+				<div class="m-title">Customer Info</div>
+				<div class="m-data" style="font-size: 0.95rem;">
+					Mobile: <b>${row.mobile_no || '—'}</b>
+				</div>
+                ${row.transaction_type === 'उधारी' ? `
+				<div class="m-data" style="font-size: 0.95rem; margin-top: 5px;">
+					Tenure: <b>${row.tenure_value || '—'} ${row.tenure_unit || 'माह'}</b>
+				</div>` : ''}
 			</div>
 
 			<div class="m-card-section">
@@ -339,14 +356,15 @@ class NakodaLedgerReview {
                 <table class="review-table" id="table-${id}">
                     <thead>
                         <tr>
-                            <th width="40">#</th>
-                            <th width="180">Raw Name</th>
-                            <th width="120">Raw Village</th>
-                            <th width="140">Village</th>
-                            <th>Matched Customer</th>
-                            <th width="120">Via</th>
-                            <th width="80" class="text-center">Score</th>
-                             <th width="120" class="text-right">Amount</th>
+                            <th width="30">#</th>
+                            <th width="120">Excel Name</th>
+                            <th width="100">Excel Village</th>
+                            <th width="130">Matched Customer</th>
+                            <th width="90">Mobile</th>
+                            ${id === 'udhaari' ? '<th width="85">Tenure</th>' : ''}
+                            <th width="75">Via</th>
+                            <th width="60" class="text-center">Score</th>
+                            <th width="90" class="text-right">Amount</th>
                             <th width="30"></th>
                         </tr>
                     </thead>
@@ -363,22 +381,43 @@ class NakodaLedgerReview {
 
 			const m_vil = md.matched_village || "";
 			const r_vil = r.village || "";
-			let vil_html = '—';
-			if (matched && m_vil) vil_html = `<span class="vil-match">✔ ${m_vil}</span>`;
-			else if (r_vil) vil_html = `<span class="vil-mismatch">✘ ${r_vil}</span>`;
+			let vil_display = '';
+			if (matched && m_vil) {
+				vil_display = `<span class="vil-match">✔ ${r_vil || m_vil}</span>`;
+			} else {
+				// Show cross and whatever village name we have in Excel
+				vil_display = `<span class="vil-mismatch">✘ ${r_vil || '—'}</span>`;
+			}
+
+			const display_name = md.corrected_customer_name || md.customer_name || r.customer;
 
 			total_amt += flt(r.amount);
 
 			html += `
 				<tr class="row-item ${is_corrected ? 'corrected' : ''}" data-idx="${r.idx - 1}" data-row-id="${r.name}">
 					<td style="color: #555;">${idx + 1}</td>
-					<td>${r.customer_name_raw}</td>
-					<td style="color: #666;">${r.village || '—'}</td>
-					<td>${vil_html}</td>
-					<td class="customer-cell">
-						${matched ? `<b style="color:${score_class === 'score-high' ? 'green' : (score_class === 'score-medium' ? 'orange' : 'red')}">${r.customer}</b>` : '<span style="color:red;">✘ Not Matched</span>'}
+					<td style="white-space: normal; min-width: 100px;">${r.customer_name_raw}</td>
+					<td style="font-size: 0.85rem;">${vil_display}</td>
+					<td class="customer-cell" style="white-space: normal; min-width: 100px;">
+						${matched ? `<b style="color:${score_class === 'score-high' ? 'green' : (score_class === 'score-medium' ? 'orange' : 'red')}">${display_name}</b>` : '<span style="color:red;">✘ Not Matched</span>'}
 					</td>
-					<td style="color: #666; font-size: 11px;">${md.matched_via || (matched ? 'Manual' : 'No Match')}</td>
+                    <td>
+                        <input type="text" class="edit-input row-mobile" value="${r.mobile_no || ''}" placeholder="Mobile">
+                    </td>
+                    ${id === 'udhaari' ? `
+                    <td>
+                        <div class="tenure-flex">
+                            <input type="number" class="edit-input row-tenure-val" value="${r.tenure_value || ''}" style="width: 32px; padding: 2px;">
+                            <select class="edit-input unit-select row-tenure-unit" style="width: 42px; padding: 2px; font-size: 11px;">
+                                <option value="माह" ${r.tenure_unit === 'माह' ? 'selected' : ''}>M</option>
+                                <option value="सप्ताह" ${r.tenure_unit === 'सप्ताह' ? 'selected' : ''}>W</option>
+                                <option value="दिन" ${r.tenure_unit === 'दिन' ? 'selected' : ''}>D</option>
+                            </select>
+                        </div>
+                    </td>` : ''}
+                    <td style="color: #666; font-size: 11px;">
+                        ${is_corrected ? 'Manual' : (md.v2_active ? 'V2-Pref' : (matched ? 'V1-Fuzzy' : 'None'))}
+                    </td>
 					<td class="text-center ${score_class}" style="font-weight: 700;">${score ? score.toFixed(1) + '%' : '—'}</td>
 					<td class="text-right" style="font-weight: 600;">${format_currency(r.amount, 'INR', 0)}</td>
                     <td class="delete-cell" title="Delete row">×</td>
@@ -403,15 +442,32 @@ class NakodaLedgerReview {
 		const me = this;
 		this.wrapper.find('.row-item').on('click', function (e) {
 			const idx = $(this).data('idx');
+			const row_id = $(this).data('row-id');
 			me.current_focus_index = idx;
+			me.current_focus_row_id = row_id;
 			me.sync_focus();
 
 			if ($(e.target).closest('.customer-cell').length) {
-				me.open_customer_search(idx);
+				me.open_customer_search(idx, row_id);
 			} else if ($(e.target).closest('.delete-cell').length) {
-				me.delete_row(idx);
+				me.delete_row(idx, row_id);
 			}
 		});
+
+        this.wrapper.find('.row-mobile, .row-tenure-val, .row-tenure-unit').on('change', function() {
+            const $tr = $(this).closest('.row-item');
+            const row_id = $tr.data('row-id');
+            const idx = $tr.data('idx');
+            
+            const mobile = $tr.find('.row-mobile').val();
+            const t_val = $tr.find('.row-tenure-val').val() || null;
+            const t_unit = $tr.find('.row-tenure-unit').val() || null;
+            
+            const row = me.rows.find(r => r.name === row_id);
+            if (row) {
+                me.update_row_customer(idx, row_id, row.customer, mobile, t_val, t_unit);
+            }
+        });
 	}
 
 	sync_focus() {
@@ -460,8 +516,8 @@ class NakodaLedgerReview {
 		});
 	}
 
-	open_customer_search(idx) {
-		const row = this.rows[idx];
+	open_customer_search(idx, row_id) {
+		const row = this.rows.find(r => r.name === row_id) || this.rows[idx];
 		const d = new frappe.ui.Dialog({
 			title: __('Select Customer for {0}', [row.customer_name_raw]),
 			fields: [
@@ -480,7 +536,7 @@ class NakodaLedgerReview {
 			],
 			primary_action_label: __('Update'),
 			primary_action: (values) => {
-				this.update_row_customer(idx, values.customer);
+				this.update_row_customer(idx, row_id, values.customer);
 				d.hide();
 			}
 		});
@@ -530,7 +586,7 @@ class NakodaLedgerReview {
 					callback: (r) => {
 						if (r.message && r.message.status === 'success') {
 							const customer_id = r.message.customer_id;
-							this.update_row_customer(idx, customer_id);
+							this.update_row_customer(idx, row.name, customer_id);
 							d.hide();
 						} else if (r.message && r.message.status === 'error') {
 							frappe.msgprint(r.message.message);
@@ -580,37 +636,57 @@ class NakodaLedgerReview {
 		d.show();
 	}
 
-	update_row_customer(idx, customer_id) {
+	update_row_customer(idx, row_id, customer_id, mobile_no=null, tenure_value=null, tenure_unit=null) {
+        const row = this.rows.find(r => r.name === row_id) || this.rows[idx];
+        
+        // If not explicitly passed, pull from memory (for search dialog path)
+        if (mobile_no === null) mobile_no = row.mobile_no;
+        if (tenure_value === null) tenure_value = row.tenure_value;
+        if (tenure_unit === null) tenure_unit = row.tenure_unit;
+
 		frappe.call({
 			method: 'nakoda_automation.ledger_sync.api.update_customer_mapping',
 			args: {
 				dashboard_id: this.dashboard_id,
-				row_index: idx,
-				customer_id: customer_id
+				row_id: row_id,
+				customer_id: customer_id,
+                mobile_no: mobile_no,
+                tenure_value: tenure_value,
+                tenure_unit: tenure_unit
 			},
 			callback: (r) => {
 				if (r.message && r.message.status === 'success') {
-					const row = this.rows[idx];
-					row.customer = r.message.customer_name || r.message.customer_id;
+					const row = this.rows.find(r => r.name === row_id) || this.rows[idx];
+					// It's critical to store the true doc ID back to the link field!
+					row.customer = r.message.customer_id;
+					if (r.message.village !== undefined) {
+						row.village = r.message.village;
+					}
+                    row.mobile_no = r.message.mobile_no || mobile_no;
+                    row.tenure_value = r.message.tenure_value !== undefined ? r.message.tenure_value : tenure_value;
+                    row.tenure_unit = r.message.tenure_unit || tenure_unit;
+					
 					let md = JSON.parse(row.match_info || '{}');
 					md.corrected = true;
 					md.best_score = 100;
 					md.matched_via = 'Manual';
+					md.corrected_customer_name = r.message.customer_name;
 					row.match_info = JSON.stringify(md);
-					this.refresh_row_ui(idx);
+					
+					this.refresh_row_ui(idx, row_id);
 					frappe.show_alert({ message: __('Customer updated'), indicator: 'green' });
 				}
 			}
 		});
 	}
 
-	delete_row(idx) {
+	delete_row(idx, row_id) {
 		frappe.confirm(__('Remove this transaction row from the summary?'), () => {
 			frappe.call({
 				method: 'nakoda_automation.ledger_sync.api.delete_ledger_row',
 				args: {
 					dashboard_id: this.dashboard_id,
-					row_index: idx
+					row_id: row_id
 				},
 				callback: (r) => {
 					if (r.message && r.message.status === 'success') {
@@ -624,21 +700,26 @@ class NakodaLedgerReview {
 		});
 	}
 
-	refresh_row_ui(idx) {
+	refresh_row_ui(idx, row_id) {
 		const isMobile = window.innerWidth < 768 || 'ontouchstart' in window;
 		if (isMobile) {
 			this.updateMobileContent(idx);
 			return;
 		}
 
-		const row = this.rows[idx];
-		const $row = this.wrapper.find(`.row-item[data-idx="${idx}"]`);
+		const row = this.rows.find(r => r.name === row_id) || this.rows[idx];
+		const md = JSON.parse(row.match_info || '{}');
+		const display_name = md.corrected_customer_name || md.customer_name || row.customer;
+		const $row = this.wrapper.find(`.row-item[data-row-id="${row_id}"]`);
 		$row.addClass('corrected');
-		$row.find('.customer-cell').html(`<b style="color:green">${row.customer}</b>`);
+		$row.find('.customer-cell').html(`<b style="color:green">${display_name}</b>`);
 		$row.find('.score-low, .score-medium, .score-high')
 			.removeClass('score-low score-medium')
 			.addClass('score-high')
 			.text('100.0%');
-		$row.find('td:nth-child(6)').text('Manual');
+        
+        // Update Matched Via text (column depends on if tenure exists)
+        const matched_via_cell = row.transaction_type === "उधारी" ? 'td:nth-child(7)' : 'td:nth-child(6)';
+		$row.find(matched_via_cell).text('Manual');
 	}
 }

@@ -4,14 +4,14 @@ frappe.ui.form.on("Nakoda Ledger Day", {
 		const has_rows = frm.doc.ledger_rows && frm.doc.ledger_rows.length > 0;
 		const pending_count = frm.doc.ledger_rows ? frm.doc.ledger_rows.filter(r => r.status === 'Pending').length : 0;
 
-		// 1. Review & Correct Button
+		// 1. Primary Review & Correct Button (Swapped and Promoted)
 		if (!is_posted && has_rows) {
 			frm.add_custom_button(__('Review & Correct'), () => {
 				frappe.set_route('ledger_review', frm.doc.name);
-			}, __('Actions')).addClass('btn-primary');
+			}).addClass('btn-success');
 		}
 
-		// 2. Parse Excel Button (if file exists and not posted)
+		// 2. Parse Excel Button (Moved to Actions group)
 		if (frm.doc.excel_file && !is_posted) {
 			frm.add_custom_button(__('Parse Excel Ledger'), function() {
 				frappe.call({
@@ -24,19 +24,12 @@ frappe.ui.form.on("Nakoda Ledger Day", {
 					freeze_message: __('Parsing Excel & Resolving Customers...'),
 					callback: function(r) {
 						if (r.message && r.message.status === 'success') {
-							frappe.show_alert({
-								message: __('Excel parsed successfully! Opening Review...'),
-								indicator: 'green'
-							});
-							
-							// Auto-redirect to Review Page
-							setTimeout(() => {
-								frappe.set_route('ledger_review', frm.doc.name);
-							}, 800);
+							// Immediate redirection, no success message as requested
+							frappe.set_route('ledger_review', frm.doc.name);
 						}
 					}
 				});
-			}, __('Actions')).addClass('btn-info');
+			}, __('Actions'));
 		}
 
 		// 3. Post Entries Button
@@ -55,10 +48,10 @@ frappe.ui.form.on("Nakoda Ledger Day", {
 						}
 					});
 				});
-			}, __('Actions')).addClass('btn-danger');
+			}, __('Actions'));
 		}
 
-		// 4. View Static Report
+		// 4. View Extraction Log (Restored to Actions)
 		if (frm.doc.import_log) {
 			frm.add_custom_button(__('View Extraction Log'), () => {
 				let d = new frappe.ui.Dialog({
