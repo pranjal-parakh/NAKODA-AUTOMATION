@@ -64,6 +64,16 @@ def get_village_exposure():
     """, as_dict=1)
 
 @frappe.whitelist()
+def get_villages():
+    """Returns a unique list of villages from customer records."""
+    return [d.village for d in frappe.db.sql("""
+        SELECT DISTINCT custom_village as village 
+        FROM `tabCustomer` 
+        WHERE disabled = 0 AND IFNULL(custom_village, '') != '' 
+        ORDER BY custom_village ASC
+    """, as_dict=1)]
+
+@frappe.whitelist()
 def get_top_debtors(limit=5):
     """Top customers by outstanding amount."""
     return frappe.db.sql("""
@@ -312,4 +322,13 @@ def get_overdue_customers():
     """, as_dict=1)
 
 
-
+@frappe.whitelist()
+def save_customer_profile(customer_id, customer_name, village, reference_name, local_address, mobile_no):
+    doc = frappe.get_doc("Customer", customer_id)
+    doc.customer_name = customer_name
+    doc.custom_village = village
+    doc.reference_name = reference_name
+    doc.local_address = local_address
+    doc.mobile_no = mobile_no
+    doc.save(ignore_permissions=True)
+    return {"status": "success"}
