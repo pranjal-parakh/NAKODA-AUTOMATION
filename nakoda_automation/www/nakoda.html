@@ -323,6 +323,18 @@
 
         .timeline-content {
             backdrop-filter: none !important;
+            background: var(--bg-card) !important;
+            border: none !important;
+            border-bottom: 1px solid var(--border-light) !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+
+        .virtual-item {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            will-change: transform;
         }
     }
 
@@ -1367,7 +1379,10 @@
         <!-- MAIN LIST -->
         <div id="overdue-list-container">
             <!-- Mobile View -->
-            <div class="mobile-only space-y-3" id="ov-list-mobile"></div>
+            <div class="mobile-only" id="ov-list-mobile" style="position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; height: 70vh;">
+                <div id="ov-list-spacer" style="width: 100%; position: absolute; top: 0; left: 0; pointer-events: none;"></div>
+                <div id="ov-list-content" style="width: 100%; position: absolute; top: 0; left: 0;"></div>
+            </div>
 
             <!-- Desktop View -->
             <div class="desktop-only">
@@ -1453,7 +1468,10 @@
         currentVillage: null,
         overdueData: [],
         overdueTimer: null,
-        renderQueue: [],
+        ovFiltered: [],
+        ovRowHeight: 84,
+        ovViewportHeight: 0,
+        renderTask: null,
         fullInvoices: [],
         recentStart: 0,
         init: function () {
@@ -1569,6 +1587,16 @@
                 this.renderOverdueList();
             });
 
+            // Virtual Scroll Binding
+            const ovViewport = document.getElementById('ov-list-mobile');
+            if (ovViewport) {
+                ovViewport.addEventListener('scroll', () => {
+                    if (this.currentView === 'overdue' && window.innerWidth <= 768) {
+                        this.updateVirtualScroll();
+                    }
+                }, { passive: true });
+            }
+
             // Update mobile bottom nav active state
             $('.mobile-bottom-nav .nav-item').removeClass('active');
             if (viewId === 'dashboard') $('.m-nav-home').addClass('active');
@@ -1632,94 +1660,93 @@
         },
 
         renderOverdueList: function () {
-            // Pre-render state
             const villageQ = $('#ov-village-search').val().toLowerCase();
             const sortVal = $('#ov-sort').val();
             const ageQ = parseInt($('.ov-age-btn.active').data('days')) || 0;
 
-            // 1. Precompute Filters & Sort (Read once)
-            let filtered = (this.overdueData || []).filter(d => {
+            // 1. Precompute Filters & Sort
+            this.ovFiltered = (this.overdueData || []).filter(d => {
                 return (d.village || '').toLowerCase().includes(villageQ) && d.days_overdue >= ageQ;
             });
 
             const [field, order] = sortVal.split('|');
-            filtered.sort((a, b) => {
+            this.ovFiltered.sort((a, b) => {
                 const valA = a[field] || 0, valB = b[field] || 0;
                 return order === 'desc' ? valB - valA : valA - valB;
             });
 
-            // 2. Update stats (Write once)
+            // 2. Update stats
             let totalAmt = 0;
-            for (let i = 0; i < filtered.length; i++) totalAmt += (filtered[i].outstanding || 0);
+            for (let i = 0; i < this.ovFiltered.length; i++) totalAmt += (this.ovFiltered[i].outstanding || 0);
             $('#ov-total-amount').text('₹ ' + this.formatMoney(totalAmt));
-            $('#ov-total-count').text(filtered.length);
-
-            const mContainer = $('#ov-list-mobile');
-            const dContainer = $('#ov-table-desktop tbody');
-
-            if (filtered.length === 0) {
-                mContainer.html('<div class="glass-card text-center p-5 opacity-50">No results found.</div>');
-                dContainer.html('<tr><td colspan="5" class="text-center p-5 opacity-50">No results found.</td></tr>');
-                return;
-            }
-
-            // 3. Batch Rendering Management
-            if (this.renderTask) cancelAnimationFrame(this.renderTask);
-            mContainer.empty();
-            dContainer.empty();
+            $('#ov-total-count').text(this.ovFiltered.length);
 
             const isMobile = window.innerWidth <= 768;
-            const batchSize = isMobile ? 25 : 100;
-            let index = 0;
 
-            const renderBatch = () => {
-                const limit = Math.min(index + batchSize, filtered.length);
-                const mFrag = document.createDocumentFragment();
+            if (isMobile) {
+                const spacer = $('#ov-list-spacer');
+                const content = $('#ov-list-content');
+                const viewport = $('#ov-list-mobile');
+                
+                content.empty();
+                spacer.css('height', (this.ovFiltered.length * this.ovRowHeight) + 'px');
+                viewport.scrollTop(0);
+                this.ovViewportHeight = viewport.height() || 500;
+                this.updateVirtualScroll();
+            } else {
+                const dContainer = $('#ov-table-desktop tbody');
+                dContainer.empty();
                 let dHtml = '';
-
-                for (; index < limit; index++) {
-                    const d = filtered[index];
+                this.ovFiltered.forEach(d => {
                     const days = d.days_overdue;
                     const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
+                    dHtml += `
+                        <tr class="row-item" onclick="app.showCustomer('${d.customer}')" style="cursor: pointer;">
+                            <td><div class="d-flex align-items-center"><div class="overdue-indicator ${oc}"></div><b>${d.customer_name}</b></div></td>
+                            <td>${d.village || '—'}</td>
+                            <td>${this.formatDate(d.due_date)}</td>
+                            <td class="text-center"><span class="text-red font-bold">${days} Days</span></td>
+                            <td class="text-right font-black" style="color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</td>
+                        </tr>`;
+                });
+                dContainer.html(dHtml);
+            }
+        },
 
-                    if (isMobile) {
-                        const item = document.createElement('div');
-                        item.className = 'timeline-item';
-                        item.onclick = () => app.showCustomer(d.customer);
-                        item.innerHTML = `
-                            <div class="timeline-content ${oc}" style="margin-bottom:12px; display:flex; align-items:center; gap:16px;">
-                                <div style="flex-shrink:0; width:100px;">
-                                    <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
-                                    <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
-                                </div>
-                                <div style="flex:1; min-width:0;">
-                                    <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
-                                    <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;">${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d</span></div>
-                                </div>
-                            </div>`;
-                        mFrag.appendChild(item);
-                    } else {
-                        dHtml += `
-                            <tr class="row-item" onclick="app.showCustomer('${d.customer}')" style="cursor: pointer;">
-                                <td><div class="d-flex align-items-center"><div class="overdue-indicator ${oc}"></div><b>${d.customer_name}</b></div></td>
-                                <td>${d.village || '—'}</td>
-                                <td>${this.formatDate(d.due_date)}</td>
-                                <td class="text-center"><span class="text-red font-bold">${days} Days</span></td>
-                                <td class="text-right font-black" style="color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</td>
-                            </tr>`;
-                    }
-                }
+        updateVirtualScroll: function () {
+            const viewport = document.getElementById('ov-list-mobile');
+            const content = $('#ov-list-content');
+            if (!viewport || !this.ovFiltered.length) return;
 
-                if (isMobile) mContainer.append(mFrag);
-                else dContainer.append(dHtml);
+            const scrollTop = viewport.scrollTop;
+            const startIdx = Math.max(0, Math.floor(scrollTop / this.ovRowHeight) - 2);
+            const endIdx = Math.min(this.ovFiltered.length - 1, Math.ceil((scrollTop + this.ovViewportHeight) / this.ovRowHeight) + 2);
 
-                if (index < filtered.length) {
-                    this.renderTask = requestAnimationFrame(renderBatch);
-                }
-            };
-
-            // Start initial render batch
-            renderBatch();
+            const mFrag = document.createDocumentFragment();
+            for (let i = startIdx; i <= endIdx; i++) {
+                const d = this.ovFiltered[i];
+                const days = d.days_overdue;
+                const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
+                
+                const item = document.createElement('div');
+                item.className = 'virtual-item';
+                item.style.transform = `translateY(${i * this.ovRowHeight}px)`;
+                item.style.height = this.ovRowHeight + 'px';
+                item.onclick = () => app.showCustomer(d.customer);
+                item.innerHTML = `
+                    <div class="timeline-content ${oc}" style="height:100%; display:flex; align-items:center; padding: 0 16px; gap:16px;">
+                        <div style="flex-shrink:0; width:100px;">
+                            <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
+                            <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
+                            <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;">${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d</span></div>
+                        </div>
+                    </div>`;
+                mFrag.appendChild(item);
+            }
+            content.html(mFrag);
         },
 
         loadCharts: function () {
