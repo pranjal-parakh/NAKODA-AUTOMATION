@@ -177,7 +177,7 @@ class NakodaAccountReceivables {
 					<td style="color: #666;">${r.reference_name || '—'}</td>
 					<td>${r.village || '—'}</td>
 					<td>${r.phone || '—'}</td>
-					<td class="text-right" style="font-weight: 600; color: ${r.amount_due > 0 ? 'red' : 'inherit'};">${format_currency(r.amount_due, 'INR', 0)}</td>
+					<td class="text-right" style="font-weight: 600; color: ${r.amount_due > 0 ? 'red' : (r.amount_due < 0 ? 'green' : 'inherit')};">${format_currency(r.amount_due, 'INR', 0)}</td>
 					<td class="text-center">${r.days_since_last_payment !== null ? r.days_since_last_payment + ' d' : '—'}</td>
 					<td class="text-center">${r.age_days !== null ? r.age_days + ' d' : '—'}</td>
 				</tr>
@@ -187,7 +187,7 @@ class NakodaAccountReceivables {
 		html += `
 			<tr class="total-row">
                 <td colspan="5" style="text-align: right;">Total</td>
-                <td style="text-align: right; color: red;">${format_currency(total_amt, 'INR', 0)}</td>
+                <td style="text-align: right; color: ${total_amt > 0 ? 'red' : (total_amt < 0 ? 'green' : 'inherit')};">${format_currency(total_amt, 'INR', 0)}</td>
                 <td colspan="2"></td>
             </tr>
         `;

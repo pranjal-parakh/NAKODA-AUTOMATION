@@ -293,5 +293,23 @@ def get_account_receivables_report():
     
     return data
 
+@frappe.whitelist()
+def get_overdue_customers():
+    """Returns list of overdue invoices with customer details."""
+    return frappe.db.sql("""
+        SELECT 
+            si.name,
+            si.customer,
+            c.customer_name,
+            c.custom_village as village,
+            si.due_date,
+            DATEDIFF(CURDATE(), si.due_date) as days_overdue,
+            si.outstanding_amount as outstanding
+        FROM `tabSales Invoice` si
+        LEFT JOIN `tabCustomer` c ON si.customer = c.name
+        WHERE si.docstatus = 1 AND si.outstanding_amount > 0 AND si.due_date < CURDATE()
+        ORDER BY days_overdue DESC
+    """, as_dict=1)
+
 
 

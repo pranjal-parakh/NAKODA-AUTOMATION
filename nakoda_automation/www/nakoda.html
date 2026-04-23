@@ -217,6 +217,10 @@
         color: #ff6b6b !important;
     }
 
+    .text-green {
+        color: #2ecc71 !important;
+    }
+
     /* Timeline Specific */
     .timeline-container {
         position: relative;
@@ -282,6 +286,26 @@
 
     .overdue-high {
         border-left: 5px solid #e74c3c !important;
+    }
+
+    .overdue-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+
+    .overdue-indicator.overdue-low {
+        background: #f1c40f;
+    }
+
+    .overdue-indicator.overdue-mid {
+        background: #e67e22;
+    }
+
+    .overdue-indicator.overdue-high {
+        background: #e74c3c;
     }
 
     /* Tables */
@@ -967,7 +991,8 @@
                         <p class="text-2xl font-extrabold text-tertiary m-0" id="m-ovr-mobile">₹ 0</p>
                     </div>
                     <button
-                        class="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-tertiary/20 active:scale-95 transition-transform">
+                        class="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-tertiary/20 active:scale-95 transition-transform"
+                        onclick="app.showOverdue()">
                         View List
                     </button>
                 </div>
@@ -1031,7 +1056,8 @@
                     <!-- Dynamic Items -->
                 </div>
                 <div class="text-center mt-4">
-                    <button class="btn-glass w-full justify-center" id="load-more-recent-mobile" onclick="app.loadRecent(true)">Load More</button>
+                    <button class="btn-glass w-full justify-center" id="load-more-recent-mobile"
+                        onclick="app.loadRecent(true)">Load More</button>
                 </div>
             </section>
         </div>
@@ -1069,7 +1095,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="glass-card">
+                    <div class="glass-card" onclick="app.showOverdue()" style="cursor: pointer;">
                         <div class="metric-label">Total Overdue</div>
                         <div class="metric-value" id="m-ovr" style="color:#ff6b6b !important">₹ 0</div>
                     </div>
@@ -1116,7 +1142,8 @@
                             </table>
                         </div>
                         <div class="text-center mt-3">
-                            <button class="btn-glass" id="load-more-recent-desktop" onclick="app.loadRecent(true)">Load More</button>
+                            <button class="btn-glass" id="load-more-recent-desktop" onclick="app.loadRecent(true)">Load
+                                More</button>
                         </div>
                     </div>
                 </div>
@@ -1264,6 +1291,88 @@
         </div>
     </div>
 
+    <!-- VIEW: OVERDUE LIST -->
+    <div id="view-overdue" class="view-section">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h2 style="font-weight: 800; margin: 0;">Overdue Report :-</h2>
+                <!-- <div style="opacity: 0.7;">Nakoda Actionable collection intelligence</div> -->
+            </div>
+            <div class="col-md-6 text-right">
+                <button class="btn-glass" onclick="app.showDashboard()">← Dashboard</button>
+            </div>
+        </div>
+
+        <!-- HEADER CARD -->
+        <div class="glass-card mb-4">
+            <div class="row text-center">
+                <div class="col-6" style="border-right: 1px solid var(--border-light);">
+                    <div class="metric-label">Total Overdue Amount</div>
+                    <div class="metric-value text-red" id="ov-total-amount">₹ 0</div>
+                </div>
+                <div class="col-6">
+                    <div class="metric-label">Overdue Customers</div>
+                    <div class="metric-value" id="ov-total-count">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTROL PANEL -->
+        <div class="glass-card mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="metric-label mb-2">Search Village</div>
+                    <input type="text" id="ov-village-search" class="search-bar" placeholder="🔍 Filter by village..."
+                        style="margin-bottom: 0;">
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-label mb-2">Sort By</div>
+                    <select id="ov-sort" class="glass-select" style="width: 100%;">
+                        <option value="days_overdue|asc">Latest Overdue</option>
+                        <option value="days_overdue|desc">Oldest Overdue</option>
+                        <option value="outstanding|desc">Amount: High → Low</option>
+                        <option value="outstanding|asc">Amount: Low → High</option>
+                    </select>
+                </div>
+                <div class="col-md-6 text-md-right mt-3 mt-md-0">
+                    <div class="metric-label mb-2">More Filters</div>
+                    <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                        <button class="btn-glass btn-sm ov-age-btn active" data-days="0">All</button>
+                        <button class="btn-glass btn-sm ov-age-btn" data-days="30">30+ Days</button>
+                        <button class="btn-glass btn-sm ov-age-btn" data-days="60">60+ Days</button>
+                        <button class="btn-glass btn-sm ov-age-btn" data-days="90">90+ Days</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN LIST -->
+        <div id="overdue-list-container">
+            <!-- Mobile View -->
+            <div class="mobile-only space-y-3" id="ov-list-mobile"></div>
+
+            <!-- Desktop View -->
+            <div class="desktop-only">
+                <div class="glass-card">
+                    <div class="table-scroll-wrapper">
+                        <table class="dashboard-table" id="ov-table-desktop">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Village</th>
+                                    <th>Due Date</th>
+                                    <th class="text-center">Days Overdue</th>
+                                    <th class="text-right">Outstanding Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- VIEW: CUSTOMER LIST -->
     <div id="view-customers" class="view-section">
         <div class="row mb-4">
@@ -1322,6 +1431,8 @@
         timelineLimit: 4,
         invoiceLimit: 2,
         fullLedger: [],
+        currentCustomer: null,
+        currentVillage: null,
         fullInvoices: [],
         recentStart: 0,
         init: function () {
@@ -1361,7 +1472,8 @@
                 dashboard: document.getElementById('view-dashboard'),
                 customer: document.getElementById('view-customer'),
                 village: document.getElementById('view-village'),
-                customers: document.getElementById('view-customers')
+                customers: document.getElementById('view-customers'),
+                overdue: document.getElementById('view-overdue')
             };
             this.searchInput = document.getElementById('global-search');
             this.clView = 'list'; // Default list view
@@ -1384,7 +1496,11 @@
             });
 
             document.getElementById('village-search').addEventListener('input', (e) => {
-                this.loadVillageDashboard();
+                if (this.currentVillage) {
+                    this.renderVillageTable();
+                } else {
+                    this.loadVillageDashboard();
+                }
             });
 
             window.addEventListener('popstate', (e) => {
@@ -1393,6 +1509,7 @@
                     else if (e.state.view === 'customer') this.showCustomer(e.state.arg, true);
                     else if (e.state.view === 'village') this.showVillageLedger(e.state.arg, true);
                     else if (e.state.view === 'customers') this.showCustomerList(true);
+                    else if (e.state.view === 'overdue') this.showOverdue(true);
                 } else {
                     this.showDashboard(true);
                 }
@@ -1402,7 +1519,7 @@
         switchView: function (viewId, stateObj = null) {
             Object.values(this.views).forEach(el => el.classList.remove('active-view'));
             this.views[viewId].classList.add('active-view');
-            
+
             const performScroll = () => {
                 window.scrollTo(0, 0);
                 document.body.scrollTop = 0;
@@ -1418,6 +1535,15 @@
             if (stateObj) {
                 history.pushState(stateObj, '');
             }
+
+            // Overdue Filters
+            $('#ov-village-search').on('input', () => this.renderOverdueList());
+            $('#ov-sort').on('change', () => this.renderOverdueList());
+            $(document).on('click', '.ov-age-btn', (e) => {
+                $('.ov-age-btn').removeClass('active');
+                $(e.currentTarget).addClass('active');
+                this.renderOverdueList();
+            });
 
             // Update mobile bottom nav active state
             $('.mobile-bottom-nav .nav-item').removeClass('active');
@@ -1463,6 +1589,101 @@
                     $('#m-ovr-mobile').text('₹ ' + this.formatMoney(m.total_overdue));
                 }
             });
+        },
+
+        /* ================= OVERDUE VIEW ================= */
+        showOverdue: function (skipHistory = false) {
+            this.switchView('overdue', skipHistory ? null : { view: 'overdue' });
+            this.loadOverdueData();
+        },
+
+        loadOverdueData: function () {
+            frappe.call({
+                method: 'nakoda_automation.dashboard.get_overdue_customers',
+                callback: (r) => {
+                    this.overdueData = r.message || [];
+                    this.renderOverdueList();
+                }
+            });
+        },
+
+        renderOverdueList: function () {
+            const container = $('#overdue-list-container');
+            const villageQ = $('#ov-village-search').val().toLowerCase();
+            const sortVal = $('#ov-sort').val();
+            const ageQ = parseInt($('.ov-age-btn.active').data('days')) || 0;
+
+            let filtered = (this.overdueData || []).filter(d => {
+                const matchesVillage = (d.village || '').toLowerCase().includes(villageQ);
+                const matchesAge = d.days_overdue >= ageQ;
+                return matchesVillage && matchesAge;
+            });
+
+            // Sorting
+            const [field, order] = sortVal.split('|');
+            filtered.sort((a, b) => {
+                let valA = a[field] || 0;
+                let valB = b[field] || 0;
+                return order === 'desc' ? valB - valA : valA - valB;
+            });
+
+            // Update header stats
+            let totalAmt = 0;
+            filtered.forEach(d => totalAmt += (d.outstanding || 0));
+            $('#ov-total-amount').text('₹ ' + this.formatMoney(totalAmt));
+            $('#ov-total-count').text(filtered.length);
+
+            if (filtered.length === 0) {
+                const emptyHtml = '<div class="glass-card text-center p-5 opacity-50">No overdue invoices found for current filters.</div>';
+                $('#ov-list-mobile').html(emptyHtml);
+                $('#ov-table-desktop tbody').html('<tr><td colspan="5" class="text-center p-5 opacity-50">No overdue invoices found.</td></tr>');
+                return;
+            }
+
+            let mobileHtml = '';
+            let desktopHtml = '';
+
+            filtered.forEach(d => {
+                let oc = '';
+                const days = d.days_overdue;
+                if (days > 90) oc = 'overdue-high';
+                else if (days > 60) oc = 'overdue-mid';
+                else if (days > 30) oc = 'overdue-low';
+
+                // Mobile Card (Amount on left)
+                mobileHtml += `
+                    <div class="timeline-item">
+                        <div class="timeline-content ${oc}" style="margin-bottom: 12px; cursor: pointer;" onclick="app.showCustomer('${d.customer}')">
+                            <div class="d-flex align-items-center gap-4">
+                                <div style="flex-shrink: 0; min-width: 100px;">
+                                    <div style="font-weight: 900; color: #ff6b6b; font-size: 1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.6;">Due: ${this.formatDate(d.due_date)}</div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div style="font-weight: 800; font-size: 1rem; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.customer_name}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 2px;">
+                                        ${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d Overdue</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Desktop Table Row
+                desktopHtml += `
+                    <tr class="row-item" onclick="app.showCustomer('${d.customer}')" style="cursor: pointer;">
+                        <td><div class="d-flex align-items-center"><div class="overdue-indicator ${oc}"></div><b>${d.customer_name}</b></div></td>
+                        <td>${d.village || '—'}</td>
+                        <td>${this.formatDate(d.due_date)}</td>
+                        <td class="text-center"><span class="text-red font-bold">${days} Days</span></td>
+                        <td class="text-right font-black" style="color: #ff6b6b; font-size: 1.1rem;">₹ ${this.formatMoney(d.outstanding)}</td>
+                    </tr>
+                `;
+            });
+
+            $('#ov-list-mobile').html(mobileHtml);
+            $('#ov-table-desktop tbody').html(desktopHtml);
         },
 
         loadCharts: function () {
@@ -1627,7 +1848,7 @@
                     r.message.forEach(row => {
                         const customerDisplay = row.customer_name || row.customer;
                         const badge = row.type === 'Jama' ? 'badge-jama' : 'badge-udhaari';
-                        
+
                         // Desktop Table
                         const tr = $(`
                             <tr onclick="app.showCustomer('${row.customer}')">
@@ -1647,13 +1868,13 @@
 
                         mobileList.append(`
                             <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
+                                <div class="text-left flex-shrink-0" style="min-width: 90px;">
+                                    <p class="font-extrabold text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${badgeClass} uppercase tracking-[0.1em]">SUCCESS</span>
+                                </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="font-extrabold text-on-surface truncate m-0 text-base">${customerDisplay}</p>
                                     <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
-                                </div>
-                                <div class="text-right flex-shrink-0">
-                                    <p class="font-extrabold text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${badgeClass} uppercase tracking-[0.1em]">SUCCESS</span>
                                 </div>
                             </div>
                         `);
@@ -1719,7 +1940,15 @@
 
                     $('#cp-borrowed').text('₹ ' + this.formatMoney(d.metrics.total_borrowed));
                     $('#cp-repaid').text('₹ ' + this.formatMoney(d.metrics.total_repaid));
-                    $('#cp-outstanding').text('₹ ' + this.formatMoney(d.metrics.outstanding));
+
+                    const out_val = d.metrics.outstanding || 0;
+                    const out_el = $('#cp-outstanding');
+                    out_el.text('₹ ' + this.formatMoney(out_val));
+                    if (out_val < 0) {
+                        out_el.removeClass('text-red').addClass('text-green');
+                    } else {
+                        out_el.removeClass('text-green').addClass('text-red');
+                    }
                     const next_due = d.metrics.next_due_date ? this.formatDate(d.metrics.next_due_date) : '-';
                     $('#cp-due').text(next_due);
                 }
@@ -1856,10 +2085,14 @@
             this.switchView('village', skipHistory ? null : { view: 'village', arg: preselect_village });
 
             if (preselect_village && typeof preselect_village === 'string') {
-                $('#village-search').val(preselect_village);
+                this.currentVillage = preselect_village;
+                $('#village-search').val('').attr('placeholder', '🔍 Search customer in ' + preselect_village + '...');
+                $('.metric-label:contains("Search Village")').text('Search Customer');
                 this.loadVillageData(preselect_village);
             } else {
-                $('#village-search').val('');
+                this.currentVillage = null;
+                $('#village-search').val('').attr('placeholder', '🔍 Type village name...');
+                $('.metric-label:contains("Search Customer")').text('Search Village');
                 this.loadVillageDashboard();
             }
         },
@@ -1933,58 +2166,73 @@
             $('#village-cards-dashboard').hide();
             $('#village-table-container').show();
             $('#vl-table-title').text(village + ' उधारी खाता');
-            $('#village-select').val(village);
 
             frappe.call({
                 method: 'nakoda_automation.dashboard.get_village_ledger',
                 args: { village: village },
                 callback: (r) => {
-                    const d = r.message;
-                    $('#vl-exposure').text('₹ ' + this.formatMoney(d.summary.total_exposure));
-                    $('#vl-customers').text(d.summary.total_customers);
+                    this.villageCustomers = r.message.customers || [];
+                    this.villageSummary = r.message.summary || {};
 
-                    const tbody = $('#village-table tbody');
-                    tbody.empty();
+                    $('#vl-exposure').text('₹ ' + this.formatMoney(this.villageSummary.total_exposure));
+                    $('#vl-customers').text(this.villageSummary.total_customers);
 
-                    // Update header for improved visibility
-                    $('#village-table thead').html(`
-                        <tr>
-                            <th>Customer Name</th>
-                            <th>Reference</th>
-                            <th>Current Outstanding</th>
-                            <th>Total Borrowed</th>
-                            <th>Total Paid</th>
-                            <th>Recovery %</th>
-                            <th>Last Payment</th>
-                        </tr>
-                    `);
-
-                    d.customers.forEach(c => {
-                        const paid = c.total_borrowed - c.outstanding;
-                        const pct = c.total_borrowed > 0 ? Math.round((paid / c.total_borrowed) * 100) : 0;
-                        const pctColor = pct > 70 ? '#2ecc71' : (pct > 30 ? '#f1c40f' : '#e74c3c');
-
-                        tbody.append(`
-                            <tr onclick="app.showCustomer('${c.name}')">
-                                <td><b>${c.customer_name || c.name}</b></td>
-                                <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
-                                <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
-                                <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                                <td style="color: #2ecc71; font-weight: 600;">₹ ${this.formatMoney(paid)}</td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; min-width: 60px;">
-                                            <div style="width: ${pct}%; height: 100%; background: ${pctColor};"></div>
-                                        </div>
-                                        <span style="font-weight: 700; font-size: 0.8rem; color: ${pctColor};">${pct}%</span>
-                                    </div>
-                                </td>
-                                <td style="opacity: 0.7; font-size: 0.85rem;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
-                            </tr>
-                        `);
-                    });
+                    this.renderVillageTable();
                 }
             });
+        },
+
+        renderVillageTable: function () {
+            const query = $('#village-search').val().toLowerCase();
+            const tbody = $('#village-table tbody');
+            tbody.empty();
+
+            const filtered = this.villageCustomers.filter(c =>
+                (c.customer_name || c.name).toLowerCase().includes(query) ||
+                (c.reference_name || '').toLowerCase().includes(query)
+            );
+
+            // Update header for improved visibility
+            $('#village-table thead').html(`
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Reference</th>
+                    <th>Current Outstanding</th>
+                    <th>Total Borrowed</th>
+                    <th>Total Paid</th>
+                    <th>Recovery %</th>
+                    <th>Last Payment</th>
+                </tr>
+            `);
+
+            filtered.forEach(c => {
+                const paid = c.total_borrowed - c.outstanding;
+                const pct = c.total_borrowed > 0 ? Math.round((paid / c.total_borrowed) * 100) : 0;
+                const pctColor = pct > 70 ? '#2ecc71' : (pct > 30 ? '#f1c40f' : '#e74c3c');
+
+                tbody.append(`
+                    <tr onclick="app.showCustomer('${c.name}')">
+                        <td><b>${c.customer_name || c.name}</b></td>
+                        <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
+                        <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
+                        <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
+                        <td style="color: #2ecc71; font-weight: 600;">₹ ${this.formatMoney(paid)}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; min-width: 60px;">
+                                    <div style="width: ${pct}%; height: 100%; background: ${pctColor};"></div>
+                                </div>
+                                <span style="font-weight: 700; font-size: 0.8rem; color: ${pctColor};">${pct}%</span>
+                            </div>
+                        </td>
+                        <td style="opacity: 0.7; font-size: 0.85rem;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
+                    </tr>
+                `);
+            });
+
+            if (filtered.length === 0) {
+                tbody.append('<tr><td colspan="7" class="text-center p-4 opacity-50">No customers found in this village matching your search.</td></tr>');
+            }
         },
 
         /* ================= CUSTOMER LIST ================= */
