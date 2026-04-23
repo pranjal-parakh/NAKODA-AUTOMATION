@@ -336,6 +336,26 @@
             width: 100%;
             will-change: transform;
         }
+
+        .cl-card {
+            background: var(--bg-card) !important;
+            border-bottom: 1px solid var(--border-light) !important;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .status-chip {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-overdue { background: #ba1a20; color: white; }
+        .status-active { background: #1b6d24; color: white; }
+        .status-settled { background: #444; color: #ccc; }
     }
 
     /* Tables */
@@ -1434,21 +1454,30 @@
         </div>
 
         <div id="cl-list-container">
-            <div class="glass-card">
-                <div class="table-scroll-wrapper">
-                    <table class="dashboard-table" id="cl-table">
-                        <thead>
-                            <tr>
-                                <th>Customer Name</th>
-                                <th>Reference</th>
-                                <th>Village</th>
-                                <th>Outstanding</th>
-                                <th>Total Borrowed</th>
-                                <th>Last Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+            <!-- Mobile View: Virtual Scroll -->
+            <div class="mobile-only" id="cl-list-mobile" style="position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; height: 75vh;">
+                <div id="cl-list-spacer" style="width: 100%; position: absolute; top: 0; left: 0; pointer-events: none;"></div>
+                <div id="cl-list-content" style="width: 100%; position: absolute; top: 0; left: 0;"></div>
+            </div>
+
+            <!-- Desktop View: Standard Table -->
+            <div class="desktop-only">
+                <div class="glass-card">
+                    <div class="table-scroll-wrapper">
+                        <table class="dashboard-table" id="cl-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Reference</th>
+                                    <th>Village</th>
+                                    <th>Outstanding</th>
+                                    <th>Total Borrowed</th>
+                                    <th>Last Payment</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1472,6 +1501,11 @@
         ovRowHeight: 84,
         ovViewportHeight: 0,
         renderTask: null,
+        rawCLData: [],
+        clFiltered: [],
+        clRowHeight: 125,
+        clViewportHeight: 0,
+        clTimer: null,
         fullInvoices: [],
         recentStart: 0,
         init: function () {
@@ -1531,8 +1565,19 @@
             });
 
             document.getElementById('cl-search').addEventListener('input', (e) => {
-                this.renderCLData();
+                if (this.clTimer) clearTimeout(this.clTimer);
+                this.clTimer = setTimeout(() => this.renderCLData(), 300);
             });
+
+            // CL Virtual Scroll Binding
+            const clViewport = document.getElementById('cl-list-mobile');
+            if (clViewport) {
+                clViewport.addEventListener('scroll', () => {
+                    if (this.currentView === 'customers' && window.innerWidth <= 768) {
+                        this.updateCLVirtualScroll();
+                    }
+                }, { passive: true });
+            }
 
             document.getElementById('village-search').addEventListener('input', (e) => {
                 if (this.currentVillage) {
@@ -1553,9 +1598,20 @@
                     this.showDashboard(true);
                 }
             });
+
+            // Virtual Scroll Binding
+            const ovViewport = document.getElementById('ov-list-mobile');
+            if (ovViewport) {
+                ovViewport.addEventListener('scroll', () => {
+                    if (this.currentView === 'overdue' && window.innerWidth <= 768) {
+                        this.updateVirtualScroll();
+                    }
+                }, { passive: true });
+            }
         },
 
         switchView: function (viewId, stateObj = null) {
+            this.currentView = viewId;
             Object.values(this.views).forEach(el => el.classList.remove('active-view'));
             this.views[viewId].classList.add('active-view');
 
@@ -1587,15 +1643,6 @@
                 this.renderOverdueList();
             });
 
-            // Virtual Scroll Binding
-            const ovViewport = document.getElementById('ov-list-mobile');
-            if (ovViewport) {
-                ovViewport.addEventListener('scroll', () => {
-                    if (this.currentView === 'overdue' && window.innerWidth <= 768) {
-                        this.updateVirtualScroll();
-                    }
-                }, { passive: true });
-            }
 
             // Update mobile bottom nav active state
             $('.mobile-bottom-nav .nav-item').removeClass('active');
@@ -1691,7 +1738,8 @@
                 content.empty();
                 spacer.css('height', (this.ovFiltered.length * this.ovRowHeight) + 'px');
                 viewport.scrollTop(0);
-                this.ovViewportHeight = viewport.height() || 500;
+                // Ensure we get a valid height even if hidden
+                this.ovViewportHeight = viewport.height() || window.innerHeight * 0.7;
                 this.updateVirtualScroll();
             } else {
                 const dContainer = $('#ov-table-desktop tbody');
@@ -2318,45 +2366,95 @@
         renderCLData: function () {
             if (!this.rawCLData) return;
 
-            // Filter
             const q = $('#cl-search').val().toLowerCase();
-            let filteredData = this.rawCLData;
-            if (q) {
-                filteredData = this.rawCLData.filter(c =>
-                    (c.customer_name && c.customer_name.toLowerCase().includes(q)) ||
-                    (c.village && c.village.toLowerCase().includes(q))
-                );
-            }
+            this.clFiltered = this.rawCLData.filter(c =>
+                (c.customer_name && c.customer_name.toLowerCase().includes(q)) ||
+                (c.village && c.village.toLowerCase().includes(q)) ||
+                (c.reference_name && c.reference_name.toLowerCase().includes(q))
+            );
 
-            // Sorting
             const sortVal = $('#cl-sort').val();
             const [field, direction] = sortVal.split('|');
-
-            const sortedData = [...filteredData].sort((a, b) => {
-                let valA = a[field] || 0;
-                let valB = b[field] || 0;
+            this.clFiltered.sort((a, b) => {
+                let valA = a[field] || 0, valB = b[field] || 0;
                 if (field === 'customer_name') {
-                    valA = valA.toLowerCase();
-                    valB = valB.toLowerCase();
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
                     return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 }
                 return direction === 'asc' ? valA - valB : valB - valA;
             });
 
-            const tbody = $('#cl-table tbody');
-            tbody.empty();
-            sortedData.forEach(c => {
-                tbody.append(`
-                    <tr onclick="app.showCustomer('${c.name}')">
-                        <td><b>${c.customer_name}</b></td>
-                        <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
-                        <td>${c.village || '-'}</td>
-                        <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
-                        <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                        <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
-                    </tr>
-                `);
-            });
+            if (window.innerWidth <= 768) {
+                const spacer = $('#cl-list-spacer');
+                const content = $('#cl-list-content');
+                const viewport = $('#cl-list-mobile');
+                
+                content.empty();
+                spacer.css('height', (this.clFiltered.length * this.clRowHeight) + 'px');
+                viewport.scrollTop(0);
+                this.clViewportHeight = viewport.height() || window.innerHeight * 0.75;
+                this.updateCLVirtualScroll();
+            } else {
+                const tbody = $('#cl-table tbody');
+                tbody.empty();
+                this.clFiltered.forEach(c => {
+                    tbody.append(`
+                        <tr onclick="app.showCustomer('${c.name}')">
+                            <td><b>${c.customer_name}</b></td>
+                            <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
+                            <td>${c.village || '-'}</td>
+                            <td style="color: #ff6b6b; font-weight: 700;">₹ ${this.formatMoney(c.outstanding)}</td>
+                            <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
+                            <td style="opacity: 0.7;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
+                        </tr>
+                    `);
+                });
+            }
+        },
+
+        updateCLVirtualScroll: function () {
+            const viewport = document.getElementById('cl-list-mobile');
+            const content = $('#cl-list-content');
+            if (!viewport || !this.clFiltered.length) return;
+
+            const scrollTop = viewport.scrollTop;
+            const startIdx = Math.max(0, Math.floor(scrollTop / this.clRowHeight) - 2);
+            const endIdx = Math.min(this.clFiltered.length - 1, Math.ceil((scrollTop + this.clViewportHeight) / this.clRowHeight) + 2);
+
+            const mFrag = document.createDocumentFragment();
+            for (let i = startIdx; i <= endIdx; i++) {
+                const c = this.clFiltered[i];
+                const status = c.outstanding > 0 ? (c.days_overdue > 30 ? 'OVERDUE' : 'ACTIVE') : 'SETTLED';
+                const statusClass = status.toLowerCase();
+
+                const item = document.createElement('div');
+                item.className = 'virtual-item cl-card';
+                item.style.transform = `translateY(${i * this.clRowHeight}px)`;
+                item.style.height = this.clRowHeight + 'px';
+                item.onclick = () => app.showCustomer(c.name);
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.customer_name}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 1px;">${c.reference_name ? `${c.reference_name} • ` : ''}${c.village || 'Unknown Village'}</div>
+                        </div>
+                        <span class="status-chip status-${statusClass}">${status}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
+                            <div style="font-size: 0.7rem; opacity: 0.5;">Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
+                            <span class="material-symbols-outlined" style="font-size: 1.2rem; opacity: 0.4;">chevron_right</span>
+                        </div>
+                    </div>
+                `;
+                mFrag.appendChild(item);
+            }
+            content.html(mFrag);
         }
     };
 
