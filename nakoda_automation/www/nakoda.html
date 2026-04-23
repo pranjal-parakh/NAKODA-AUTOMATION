@@ -1438,18 +1438,24 @@
             </div>
         </div>
 
-        <div class="view-controls">
-            <div class="d-flex align-items-center">
-                <input type="text" id="cl-search" class="search-bar" placeholder="🔍 Filter by Name or Village..."
-                    style="width: 300px; margin-bottom: 0; margin-right: 20px; padding: 10px 20px;">
-                <span style="margin-right: 15px; font-weight: 600; font-size: 0.9rem;">Sort by:</span>
-                <select id="cl-sort" class="glass-select" style="width: 200px; padding: 8px 12px; height: 40px;">
-                    <option value="customer_name|asc" selected>Name (A-Z)</option>
-                    <option value="outstanding|desc">Outstanding (High to Low)</option>
-                    <option value="outstanding|asc">Outstanding (Low to High)</option>
-                    <option value="total_borrowed|desc">Total Borrowed</option>
-                    <option value="last_payment|desc">Last Payment Date</option>
-                </select>
+        <!-- CONTROL PANEL -->
+        <div class="glass-card mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="metric-label mb-2">Search Customer</div>
+                    <input type="text" id="cl-search" class="search-bar" placeholder="🔍 Filter by Name or Village..."
+                        style="width: 100%; margin-bottom: 0;">
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <div class="metric-label mb-2">Sort By</div>
+                    <select id="cl-sort" class="glass-select" style="width: 100%;">
+                        <option value="customer_name|asc" selected>Name (A-Z)</option>
+                        <option value="outstanding|desc">Outstanding (High to Low)</option>
+                        <option value="outstanding|asc">Outstanding (Low to High)</option>
+                        <option value="total_borrowed|desc">Total Borrowed</option>
+                        <option value="last_payment|desc">Last Payment Date</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -1783,13 +1789,13 @@
                 item.onclick = () => app.showCustomer(d.customer);
                 item.innerHTML = `
                     <div class="timeline-content ${oc}" style="height:100%; display:flex; align-items:center; padding: 0 16px; gap:16px;">
-                        <div style="flex-shrink:0; width:100px;">
-                            <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
-                            <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
-                        </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
                             <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;">${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d</span></div>
+                        </div>
+                        <div style="flex-shrink:0; text-align:right;">
+                            <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
+                            <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
                         </div>
                     </div>`;
                 mFrag.appendChild(item);
@@ -1979,13 +1985,13 @@
 
                         mobileList.append(`
                             <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
-                                <div class="text-left flex-shrink-0" style="min-width: 90px;">
-                                    <p class="font-extrabold text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
-                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${badgeClass} uppercase tracking-[0.1em]">SUCCESS</span>
-                                </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="font-extrabold text-on-surface truncate m-0 text-base">${customerDisplay}</p>
                                     <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
+                                </div>
+                                <div class="text-right flex-shrink-0" style="min-width: 90px;">
+                                    <p class="font-extrabold text-lg m-0" style="${colorStyle}">₹ ${this.formatMoney(row.amount)}</p>
+                                    <span class="text-[9px] font-black px-2 py-0.5 rounded-full ${badgeClass} uppercase tracking-[0.1em]">SUCCESS</span>
                                 </div>
                             </div>
                         `);
@@ -2136,14 +2142,14 @@
                 list.append(`
                     <div class="timeline-item ${cClass}" style="margin-bottom: 8px;">
                         <div class="timeline-date" style="margin-bottom: 0;">${this.formatDate(item.posting_date)}</div>
-                        <div class="timeline-content" style="padding: 6px 12px;">
+                        <div class="timeline-content" style="padding: 6px 12px; display: flex; justify-content: space-between; align-items: center;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 700; font-size: 0.8rem;">
                                     ${cLabel} <span style="font-size: 0.65rem; font-weight: 400; opacity: 0.5;">#${item.id.split('-').pop()}</span>
                                 </div>
                                 <div style="font-size: 0.7rem; opacity: 0.8;">बकाया: ₹ ${this.formatMoney(Math.abs(item.runningBalance))}</div>
                             </div>
-                            <div style="font-size: 0.9rem; font-weight: 800; color: ${cColor}">
+                            <div style="font-size: 0.9rem; font-weight: 800; color: ${cColor}; text-align: right; flex-shrink: 0;">
                                 ${symbol} ₹ ${this.formatMoney(item.amount)}
                             </div>
                         </div>
@@ -2358,7 +2364,10 @@
                 callback: (r) => {
                     if (!r.message) return;
                     this.rawCLData = r.message.customers;
-                    $('#cl-summary').text(`Total Customers: ${r.message.summary.total_customers} | Total Exposure: ₹ ${this.formatMoney(r.message.summary.total_exposure)}`);
+                    $('#cl-summary').html(`
+                        <div style="font-size: 0.9rem;">Total Customers: <strong style="color: var(--text-bright);">${r.message.summary.total_customers}</strong></div>
+                        <div style="font-size: 1.1rem; margin-top: 4px;">Total Exposure: <strong style="color: #ff6b6b;">₹ ${this.formatMoney(r.message.summary.total_exposure)}</strong></div>
+                    `);
                     this.renderCLData();
                 }
             });
@@ -2442,12 +2451,12 @@
                         <span class="status-chip status-${statusClass}">${status}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                        <div>
-                            <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
                             <div style="font-size: 0.7rem; opacity: 0.5;">Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
+                            <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
                             <span class="material-symbols-outlined" style="font-size: 1.2rem; opacity: 0.4;">chevron_right</span>
                         </div>
                     </div>
