@@ -310,7 +310,7 @@
 
     @media (max-width: 768px) {
         .glass-card {
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
             border: 1px solid var(--border-main) !important;
@@ -324,9 +324,12 @@
             transform: none !important;
         }
 
-        .glass-card:hover, .btn-glass:hover, .village-card:hover, .customer-card:hover {
+        .glass-card:hover,
+        .btn-glass:hover,
+        .village-card:hover,
+        .customer-card:hover {
             transform: none !important;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
         }
 
         .timeline-content {
@@ -359,9 +362,21 @@
             font-weight: 800;
             text-transform: uppercase;
         }
-        .status-overdue { background: #ba1a20; color: white; }
-        .status-active { background: #1b6d24; color: white; }
-        .status-settled { background: #444; color: #ccc; }
+
+        .status-overdue {
+            background: #ba1a20;
+            color: white;
+        }
+
+        .status-active {
+            background: #1b6d24;
+            color: white;
+        }
+
+        .status-settled {
+            background: #444;
+            color: #ccc;
+        }
 
         /* Sticky Header for Mobile - REMOVED sticky as requested */
         .mobile-sticky-header {
@@ -576,7 +591,7 @@
     }
 
     /* Container for incremental rendering */
-    #cl-list-content {
+    #cl-list-content, #ov-list-content, #vl-list-content {
         contain: content;
         min-height: 100vh;
     }
@@ -734,6 +749,7 @@
         align-items: center;
         padding: 20px;
     }
+
     .modal-content {
         background: var(--bg-card);
         border: 1px solid var(--border-main);
@@ -744,10 +760,19 @@
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
     @keyframes modalFadeIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
+
     .modal-title {
         font-size: 1.5rem;
         font-weight: 800;
@@ -755,7 +780,11 @@
         color: var(--text-bright);
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
-    .modal-field { margin-bottom: 16px; }
+
+    .modal-field {
+        margin-bottom: 16px;
+    }
+
     .modal-label {
         font-size: 0.7rem;
         text-transform: uppercase;
@@ -764,6 +793,7 @@
         margin-bottom: 6px;
         font-weight: 800;
     }
+
     .modal-input {
         width: 100%;
         background: var(--bg-input);
@@ -774,10 +804,12 @@
         font-size: 1rem;
         transition: border-color 0.2s;
     }
+
     .modal-input:focus {
         outline: none;
         border-color: var(--accent-orange);
     }
+
     .modal-actions {
         display: flex;
         gap: 12px;
@@ -1036,12 +1068,12 @@
 </script>
 <div class="glass-nav">
     <div class="d-flex align-items-center justify-content-between" style="width: 100%;">
-        <div class="nav-title" onclick="app.showDashboard()" style="font-family: 'Yatra One', cursive;">नाकोड़ा उतई उधारी
+        <div class="nav-title" onpointerdown="app.showDashboard()" style="font-family: 'Yatra One', cursive;">नाकोड़ा उतई उधारी
             खाता</div>
         <div class="nav-buttons d-none d-md-flex" style="gap: 12px;">
-            <button class="btn-glass" onclick="app.showCustomerList()">👤 Customers </button>
-            <button class="btn-glass" onclick="app.showVillageLedger()">🏘️ Village Ledger</button>
-            <button class="btn-glass" onclick="window.location.href='/app'"> Back to ERP Desk</button>
+            <button class="btn-glass" onpointerdown="app.showCustomerList()">👤 Customers </button>
+            <button class="btn-glass" onpointerdown="app.showVillageLedger()">🏘️ Village Ledger</button>
+            <button class="btn-glass" onpointerdown="window.location.href='/app'"> Back to ERP Desk</button>
         </div>
         <div class="theme-switch-wrapper d-none d-md-flex ml-4">
             <label class="theme-switch" for="checkbox">
@@ -1069,11 +1101,11 @@
         <span class="material-symbols-outlined">map</span>
         <span>Villages</span>
     </a>
-    <a href="javascript:void(0)" class="nav-item m-nav-erp" onclick="window.location.href='/app'">
+    <a href="javascript:void(0)" class="nav-item m-nav-erp" onpointerdown="window.location.href='/app'">
         <span class="material-symbols-outlined">rocket_launch</span>
         <span>ERP</span>
     </a>
-    <a href="javascript:void(0)" class="nav-item m-nav-mode" onclick="document.getElementById('checkbox').click()">
+    <a href="javascript:void(0)" class="nav-item m-nav-mode" onpointerdown="document.getElementById('checkbox').click()">
         <span class="material-symbols-outlined">contrast</span>
         <span>Mode</span>
     </a>
@@ -1130,7 +1162,7 @@
                     </div>
                     <button
                         class="bg-tertiary text-on-tertiary px-5 py-2.5 rounded-2xl text-xs font-black shadow-lg shadow-tertiary/20 active:scale-95 transition-transform"
-                        onclick="app.showOverdue()">
+                        onpointerdown="app.showOverdue()">
                         View List
                     </button>
                 </div>
@@ -1147,7 +1179,7 @@
                 </div>
                 <button
                     class="w-full h-14 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
-                    onclick="window.location.href='/app/nakoda-ledger-day'">
+                    onpointerdown="window.location.href='/app/nakoda-ledger-day'">
                     <span class="material-symbols-outlined">cloud_upload</span>
                     Upload Ledger
                 </button>
@@ -1188,14 +1220,14 @@
                 <div class="flex justify-between items-end px-1">
                     <h3 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Recent
                         Transactions</h3>
-                    <button class="text-primary font-black text-xs" onclick="app.showCustomerList()">View All</button>
+                    <button class="text-primary font-black text-xs" onpointerdown="app.showCustomerList()">View All</button>
                 </div>
                 <div id="recent-transactions-mobile" class="space-y-3">
                     <!-- Dynamic Items -->
                 </div>
                 <div class="text-center mt-4">
                     <button class="btn-glass w-full justify-center" id="load-more-recent-mobile"
-                        onclick="app.loadRecent(true)">Load More</button>
+                        onpointerdown="app.loadRecent(true)">Load More</button>
                 </div>
             </section>
         </div>
@@ -1208,7 +1240,7 @@
                         placeholder="🔍 Search Customer by Name, Village, or Phone... (Press Enter)">
                 </div>
                 <div class="col-md-3 text-right">
-                    <button class="btn-primary-glass" onclick="window.location.href='/app/nakoda-ledger-day'">➕ Upload
+                    <button class="btn-primary-glass" onpointerdown="window.location.href='/app/nakoda-ledger-day'">➕ Upload
                         Ledger</button>
                 </div>
             </div>
@@ -1233,7 +1265,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="glass-card" onclick="app.showOverdue()" style="cursor: pointer;">
+                    <div class="glass-card" onpointerdown="app.showOverdue()" style="cursor: pointer;">
                         <div class="metric-label">Total Overdue</div>
                         <div class="metric-value" id="m-ovr" style="color:#ff6b6b !important">₹ 0</div>
                     </div>
@@ -1280,7 +1312,7 @@
                             </table>
                         </div>
                         <div class="text-center mt-3">
-                            <button class="btn-glass" id="load-more-recent-desktop" onclick="app.loadRecent(true)">Load
+                            <button class="btn-glass" id="load-more-recent-desktop" onpointerdown="app.loadRecent(true)">Load
                                 More</button>
                         </div>
                     </div>
@@ -1293,13 +1325,13 @@
     <!-- VIEW: CUSTOMER PROFILE -->
     <div id="view-customer" class="view-section">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <button class="btn-glass" onclick="history.back()">← Back</button>
+            <button class="btn-glass" onpointerdown="history.back()">← Back</button>
             <button class="btn-glass" onpointerdown="app.editProfile()">✏️ Edit Profile</button>
         </div>
 
         <div class="glass-card">
             <div class="profile-header-main flex items-center justify-between">
-                <div style="cursor: pointer;" onclick="app.showDashboard()" class="mobile-text-center">
+                <div style="cursor: pointer;" onpointerdown="app.showDashboard()" class="mobile-text-center">
                     <h2 id="cp-name" style="margin: 0; font-weight: 800;">Loading...</h2>
                     <div id="cp-ref-addr"
                         style="font-size: 0.9rem; margin-top: 4px; color: var(--text-muted); display: none;"></div>
@@ -1383,7 +1415,14 @@
     <!-- VIEW: VILLAGE LEDGER -->
     <div id="view-village" class="view-section">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <button class="btn-glass" onclick="history.back()">← Back</button>
+            <button class="btn-glass" onpointerdown="history.back()">← Back</button>
+            <div id="vl-sort-container" style="display: none;">
+                <select id="vl-sort" class="glass-select" style="min-width: 150px;" onchange="app.renderVillageTable()">
+                    <option value="customer_name|asc">Name (A-Z)</option>
+                    <option value="outstanding|desc">Outstanding (High)</option>
+                    <option value="outstanding|asc">Outstanding (Low)</option>
+                </select>
+            </div>
         </div>
 
         <div class="glass-card">
@@ -1409,9 +1448,9 @@
         <div class="glass-card mt-4" id="village-table-container" style="display: none;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3 style="margin: 0; font-weight: 800;" id="vl-table-title">Customer Data</h3>
-                <button class="btn-glass btn-sm" onclick="app.showVillageLedger()">✖ Clear Selection</button>
+                <button class="btn-glass btn-sm" onpointerdown="app.showVillageLedger()">✖ Clear Selection</button>
             </div>
-            
+
             <!-- Mobile View: Card List -->
             <div class="mobile-only" id="vl-list-mobile">
                 <div id="vl-list-content"></div>
@@ -1445,7 +1484,7 @@
                 <!-- <div style="opacity: 0.7;">Nakoda Actionable collection intelligence</div> -->
             </div>
             <div class="col-md-6 text-right">
-                <button class="btn-glass" onclick="app.showDashboard()">← Dashboard</button>
+                <button class="btn-glass" onpointerdown="app.showDashboard()">← Dashboard</button>
             </div>
         </div>
 
@@ -1584,40 +1623,41 @@
     </div>
 
 </div>
-    <!-- Modal: Edit Profile -->
-    <div id="modal-edit-profile" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-title">Edit Profile</div>
-            <div class="modal-field">
-                <div class="modal-label">Customer Name</div>
-                <input type="text" id="edit-customer-name" class="modal-input">
-            </div>
-            <div class="modal-field">
-                <div class="modal-label">Village</div>
-                <input type="text" id="edit-village" class="modal-input" list="village-list-options" placeholder="Type to search village...">
-                <datalist id="village-list-options"></datalist>
-            </div>
-            <div class="modal-field">
-                <div class="modal-label">Reference Name</div>
-                <input type="text" id="edit-reference" class="modal-input">
-            </div>
-            <div class="modal-field">
-                <div class="modal-label">Local Address</div>
-                <input type="text" id="edit-address" class="modal-input">
-            </div>
-            <div class="modal-field">
-                <div class="modal-label">Mobile Number</div>
-                <input type="text" id="edit-mobile" class="modal-input">
-                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 6px;">
-                    Existing numbers are kept automatically. Separate multiple with comma.
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-glass" style="flex: 1;" onpointerdown="app.closeEditModal()">Cancel</button>
-                <button class="btn-primary-glass" style="flex: 1;" onpointerdown="app.saveProfile()">Save</button>
+<!-- Modal: Edit Profile -->
+<div id="modal-edit-profile" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-title">Edit Profile</div>
+        <div class="modal-field">
+            <div class="modal-label">Customer Name</div>
+            <input type="text" id="edit-customer-name" class="modal-input">
+        </div>
+        <div class="modal-field">
+            <div class="modal-label">Village</div>
+            <input type="text" id="edit-village" class="modal-input" list="village-list-options"
+                placeholder="Type to search village...">
+            <datalist id="village-list-options"></datalist>
+        </div>
+        <div class="modal-field">
+            <div class="modal-label">Reference Name</div>
+            <input type="text" id="edit-reference" class="modal-input">
+        </div>
+        <div class="modal-field">
+            <div class="modal-label">Local Address</div>
+            <input type="text" id="edit-address" class="modal-input">
+        </div>
+        <div class="modal-field">
+            <div class="modal-label">Mobile Number</div>
+            <input type="text" id="edit-mobile" class="modal-input">
+            <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 6px;">
+                Existing numbers are kept automatically. Separate multiple with comma.
             </div>
         </div>
+        <div class="modal-actions">
+            <button class="btn-glass" style="flex: 1;" onpointerdown="app.closeEditModal()">Cancel</button>
+            <button class="btn-primary-glass" style="flex: 1;" onpointerdown="app.saveProfile()">Save</button>
+        </div>
     </div>
+</div>
 {% endblock %}
 
 {% block script %}
@@ -1641,6 +1681,9 @@
         clViewportHeight: 0,
         clTimer: null,
         clRenderTask: null,
+        ovRenderTask: null,
+        vlRenderTask: null,
+        vlSortBy: 'customer_name|asc',
         fullInvoices: [],
         recentStart: 0,
         init: function () {
@@ -1688,6 +1731,27 @@
             this.clView = 'list'; // Default list view
         },
 
+        // Helper to differentiate between tap and scroll
+        bindCardEvents: function (el, callback) {
+            let startX, startY, startTime;
+            el.addEventListener('pointerdown', (e) => {
+                startX = e.clientX;
+                startY = e.clientY;
+                startTime = Date.now();
+            }, { passive: true });
+
+            el.addEventListener('pointerup', (e) => {
+                const diffX = Math.abs(e.clientX - startX);
+                const diffY = Math.abs(e.clientY - startY);
+                const duration = Date.now() - startTime;
+
+                // Only trigger if movement is minimal and it was a quick tap
+                if (diffX < 10 && diffY < 10 && duration < 300) {
+                    callback(e);
+                }
+            }, { passive: true });
+        },
+
         loadVillages: function () {
             frappe.call({
                 method: 'nakoda_automation.dashboard.get_villages',
@@ -1722,11 +1786,14 @@
             // CL Virtual Scroll Binding removed for native scrolling
 
             document.getElementById('village-search').addEventListener('input', (e) => {
-                if (this.currentVillage) {
-                    this.renderVillageTable();
-                } else {
-                    this.loadVillageDashboard();
-                }
+                if (this.vlTimer) clearTimeout(this.vlTimer);
+                this.vlTimer = setTimeout(() => {
+                    if (this.currentVillage) {
+                        this.renderVillageTable();
+                    } else {
+                        this.loadVillageDashboard();
+                    }
+                }, 150);
             });
 
             window.addEventListener('popstate', (e) => {
@@ -1841,8 +1908,13 @@
         },
 
         renderOverdueList: function () {
-            const villageQ = $('#ov-village-search').val().toLowerCase();
-            const sortVal = $('#ov-sort').val();
+            if (this.ovRenderTask) {
+                cancelAnimationFrame(this.ovRenderTask);
+                this.ovRenderTask = null;
+            }
+
+            const villageQ = document.getElementById('ov-village-search').value.toLowerCase();
+            const sortVal = document.getElementById('ov-sort').value;
             const ageQ = parseInt($('.ov-age-btn.active').data('days')) || 0;
 
             // 1. Precompute Filters & Sort
@@ -1859,52 +1931,137 @@
             // 2. Update stats
             let totalAmt = 0;
             for (let i = 0; i < this.ovFiltered.length; i++) totalAmt += (this.ovFiltered[i].outstanding || 0);
-            $('#ov-total-amount').text('₹ ' + this.formatMoney(totalAmt));
-            $('#ov-total-count').text(this.ovFiltered.length);
+            document.getElementById('ov-total-amount').textContent = '₹ ' + this.formatMoney(totalAmt);
+            document.getElementById('ov-total-count').textContent = this.ovFiltered.length;
 
             const isMobile = window.innerWidth <= 768;
+            const container = isMobile ? document.getElementById('ov-list-content') : document.querySelector('#ov-table-desktop tbody');
+            
+            if (!container) return;
 
-            if (isMobile) {
-                const content = $('#ov-list-content');
-                content.empty();
-                
-                let mHtml = '';
-                this.ovFiltered.forEach(d => {
-                    const days = d.days_overdue;
-                    const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
-                    mHtml += `
-                        <div class="cl-card" onclick="app.showCustomer('${d.customer}')" style="margin-bottom: 0;">
-                            <div class="timeline-content ${oc}" style="display:flex; align-items:center; padding: 12px 16px; gap:16px; border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border-light) !important;">
-                                <div style="flex:1; min-width:0;">
-                                    <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
-                                    <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;"><b>${d.village || 'Unknown'}</b> • <span class="text-red font-bold">${days}d</span></div>
-                                </div>
-                                <div style="flex-shrink:0; text-align:right;">
-                                    <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
-                                    <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                content.html(mHtml);
-            } else {
-                const dContainer = $('#ov-table-desktop tbody');
-                dContainer.empty();
-                let dHtml = '';
-                this.ovFiltered.forEach(d => {
-                    const days = d.days_overdue;
-                    const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
-                    dHtml += `
-                        <tr class="row-item" onclick="app.showCustomer('${d.customer}')" style="cursor: pointer;">
-                            <td><div class="d-flex align-items-center"><div class="overdue-indicator ${oc}"></div><b>${d.customer_name}</b></div></td>
-                            <td>${d.village || '—'}</td>
-                            <td>${this.formatDate(d.due_date)}</td>
-                            <td class="text-center"><span class="text-red font-bold">${days} Days</span></td>
-                            <td class="text-right font-black" style="color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</td>
-                        </tr>`;
-                });
-                dContainer.html(dHtml);
-            }
+            // Efficient clear
+            while (container.firstChild) container.removeChild(container.firstChild);
+
+            if (this.ovFiltered.length === 0) return;
+
+            let index = 0;
+            const batchSize = isMobile ? 15 : 25;
+
+            const renderBatch = () => {
+                const fragment = document.createDocumentFragment();
+                const end = Math.min(index + batchSize, this.ovFiltered.length);
+
+                for (; index < end; index++) {
+                    const d = this.ovFiltered[index];
+                    const element = isMobile ? this.createOverdueCard(d) : this.createOverdueRow(d);
+                    fragment.appendChild(element);
+                }
+
+                container.appendChild(fragment);
+
+                if (index < this.ovFiltered.length) {
+                    this.ovRenderTask = requestAnimationFrame(renderBatch);
+                } else {
+                    this.ovRenderTask = null;
+                }
+            };
+
+            renderBatch();
+        },
+
+        createOverdueCard: function (d) {
+            const card = document.createElement('div');
+            card.className = 'cl-card';
+            card.style.marginBottom = '0';
+            this.bindCardEvents(card, () => this.showCustomer(d.customer));
+
+            const days = d.days_overdue;
+            const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
+
+            const content = document.createElement('div');
+            content.className = `timeline-content ${oc}`;
+            content.style.cssText = 'display:flex; align-items:center; padding: 12px 16px; gap:16px; border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border-light) !important;';
+
+            const info = document.createElement('div');
+            info.style.cssText = 'flex:1; min-width:0;';
+
+            const name = document.createElement('div');
+            name.style.cssText = 'font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+            name.textContent = d.customer_name;
+
+            const meta = document.createElement('div');
+            meta.style.cssText = 'font-size:0.8rem; opacity:0.7; margin-top:2px;';
+            meta.innerHTML = `<b>${d.village || 'Unknown'}</b> • <span class="text-red font-bold">${days}d</span>`;
+
+            info.appendChild(name);
+            info.appendChild(meta);
+
+            const amount = document.createElement('div');
+            amount.style.cssText = 'flex-shrink:0; text-align:right;';
+
+            const amtVal = document.createElement('div');
+            amtVal.style.cssText = 'font-weight:900; color:#ff6b6b; font-size:1.1rem;';
+            amtVal.textContent = `₹ ${this.formatMoney(d.outstanding)}`;
+
+            const due = document.createElement('div');
+            due.style.cssText = 'font-size:0.7rem; opacity:0.6;';
+            due.textContent = `Due: ${this.formatDate(d.due_date)}`;
+
+            amount.appendChild(amtVal);
+            amount.appendChild(due);
+
+            content.appendChild(info);
+            content.appendChild(amount);
+            card.appendChild(content);
+
+            return card;
+        },
+
+        createOverdueRow: function (d) {
+            const tr = document.createElement('tr');
+            tr.className = 'row-item';
+            tr.style.cursor = 'pointer';
+            this.bindCardEvents(tr, () => this.showCustomer(d.customer));
+
+            const days = d.days_overdue;
+            const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
+
+            const tdName = document.createElement('td');
+            const nameFlex = document.createElement('div');
+            nameFlex.className = 'd-flex align-items-center';
+            const indicator = document.createElement('div');
+            indicator.className = `overdue-indicator ${oc}`;
+            const bName = document.createElement('b');
+            bName.textContent = d.customer_name;
+            nameFlex.appendChild(indicator);
+            nameFlex.appendChild(bName);
+            tdName.appendChild(nameFlex);
+
+            const tdVillage = document.createElement('td');
+            tdVillage.textContent = d.village || '—';
+
+            const tdDate = document.createElement('td');
+            tdDate.textContent = this.formatDate(d.due_date);
+
+            const tdDays = document.createElement('td');
+            tdDays.className = 'text-center';
+            const sDays = document.createElement('span');
+            sDays.className = 'text-red font-bold';
+            sDays.textContent = `${days} Days`;
+            tdDays.appendChild(sDays);
+
+            const tdAmt = document.createElement('td');
+            tdAmt.className = 'text-right font-black';
+            tdAmt.style.cssText = 'color:#ff6b6b; font-size:1.1rem;';
+            tdAmt.textContent = `₹ ${this.formatMoney(d.outstanding)}`;
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdVillage);
+            tr.appendChild(tdDate);
+            tr.appendChild(tdDays);
+            tr.appendChild(tdAmt);
+
+            return tr;
         },
 
         // updateVirtualScroll removed for native scrolling
@@ -2074,7 +2231,7 @@
 
                         // Desktop Table
                         const tr = $(`
-                            <tr onclick="app.showCustomer('${row.customer}')">
+                            <tr onpointerdown="app.showCustomer('${row.customer}')">
                                 <td>${this.formatDate(row.posting_date)}</td>
                                 <td class="font-bold">${customerDisplay}</td>
                                 <td><span class="${badge}">${row.type}</span></td>
@@ -2090,7 +2247,7 @@
                         const typeLabel = row.type === 'Jama' ? 'जमा' : 'उधार';
 
                         mobileList.append(`
-                            <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onclick="app.showCustomer('${row.customer}')">
+                            <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 shadow-[0px_4px_12px_rgba(0,0,0,0.04)] border border-surface-container-high/20 flex items-center gap-4 active:scale-[0.98] transition-all" onpointerdown="app.showCustomer('${row.customer}')">
                                 <div class="flex-1 min-w-0">
                                     <p class="font-extrabold text-on-surface truncate m-0 text-base">${customerDisplay}</p>
                                     <p class="text-[10px] text-on-surface-variant font-bold m-0 opacity-60 uppercase tracking-wider">${typeLabel} • ${this.formatDate(row.posting_date)}</p>
@@ -2282,7 +2439,7 @@
                 if (days > 90) oc = 'overdue-high'; else if (days > 60) oc = 'overdue-mid'; else if (days > 30) oc = 'overdue-low';
 
                 invList.append(`
-                    <div class="timeline-content ${oc}" style="margin-bottom: 10px;" onclick="window.open('/app/sales-invoice/${inv.name}')">
+                    <div class="timeline-content ${oc}" style="margin-bottom: 10px;" onpointerdown="window.open('/app/sales-invoice/${inv.name}')">
                         <div><div style="font-weight: 700;">${inv.name}</div><div style="font-size: 0.7rem;">Due: ${this.formatDate(inv.due_date)}</div></div>
                         <div class="text-right">
                             <div style="font-weight: 800; color: #ff6b6b">₹ ${this.formatMoney(inv.outstanding_amount)}</div>
@@ -2312,16 +2469,23 @@
                 this.currentVillage = preselect_village;
                 $('#village-search').val('').attr('placeholder', '🔍 Search customer in ' + preselect_village + '...');
                 $('.metric-label:contains("Search Village")').text('Search Customer');
+                $('#vl-sort-container').show();
                 this.loadVillageData(preselect_village);
             } else {
                 this.currentVillage = null;
                 $('#village-search').val('').attr('placeholder', '🔍 Type village name...');
                 $('.metric-label:contains("Search Customer")').text('Search Village');
+                $('#vl-sort-container').hide();
                 this.loadVillageDashboard();
             }
         },
 
         loadVillageDashboard: function () {
+            if (this.vlRenderTask) {
+                cancelAnimationFrame(this.vlRenderTask);
+                this.vlRenderTask = null;
+            }
+
             $('#village-table-container').hide();
             $('#village-cards-dashboard').attr('style', 'display: grid !important;');
 
@@ -2331,8 +2495,11 @@
                 method: 'nakoda_automation.dashboard.get_village_exposure',
                 callback: (r) => {
                     let data = r.message || [];
-                    const container = $('#village-cards-dashboard');
-                    container.empty();
+                    const container = document.getElementById('village-cards-dashboard');
+                    if (!container) return;
+
+                    // Clear previous
+                    while (container.firstChild) container.removeChild(container.firstChild);
 
                     // Matching and Sorting logic
                     if (query) {
@@ -2340,46 +2507,90 @@
                         data.sort((a, b) => {
                             const nameA = a.village.toLowerCase();
                             const nameB = b.village.toLowerCase();
-
-                            // Exact match first
                             if (nameA === query) return -1;
                             if (nameB === query) return 1;
-
-                            // Starts with query second
                             if (nameA.startsWith(query) && !nameB.startsWith(query)) return -1;
                             if (!nameA.startsWith(query) && nameB.startsWith(query)) return 1;
-
-                            // Otherwise default to customer count
                             return b.customer_count - a.customer_count;
                         });
                     } else {
-                        // Default Sort by Customers (High to Low)
                         data.sort((a, b) => b.customer_count - a.customer_count);
                     }
 
-                    let total_exp = 0;
-                    let total_cust = 0;
+                    // Calculate Totals Efficiently
+                    let total_exp = 0, total_cust = 0;
+                    for (let i = 0; i < data.length; i++) {
+                        total_exp += data[i].outstanding || 0;
+                        total_cust += data[i].customer_count || 0;
+                    }
 
-                    data.forEach(v => {
-                        const vName = v.village || 'Unknown';
-                        total_exp += v.outstanding;
-                        total_cust += v.customer_count;
-                        container.append(`
-                            <div class="village-card" onclick="app.showVillageLedger('${vName}')">
-                                <div class="outstanding-label">Village Exposure</div>
-                                <div class="outstanding-value">₹ ${this.formatMoney(v.outstanding)}</div>
-                                <div class="customer-name">गांव: ${vName}</div>
-                                <div class="customer-meta">
-                                    <span>👥 ${v.customer_count} Active Customers</span>
-                                </div>
-                            </div>
-                        `);
+                    // Update UI using RequestAnimationFrame for smoothness
+                    requestAnimationFrame(() => {
+                        document.getElementById('vl-exposure').textContent = '₹ ' + this.formatMoney(total_exp);
+                        document.getElementById('vl-customers').textContent = total_cust;
                     });
 
-                    $('#vl-exposure').text('₹ ' + this.formatMoney(total_exp));
-                    $('#vl-customers').text(total_cust);
+                    if (data.length === 0) {
+                        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.5;">No villages matching search.</div>';
+                        return;
+                    }
+
+                    let index = 0;
+                    const batchSize = 15;
+
+                    const renderBatch = () => {
+                        const fragment = document.createDocumentFragment();
+                        const end = Math.min(index + batchSize, data.length);
+
+                        for (; index < end; index++) {
+                            const v = data[index];
+                            fragment.appendChild(this.createVillageCard(v));
+                        }
+
+                        container.appendChild(fragment);
+
+                        if (index < data.length) {
+                            this.vlRenderTask = requestAnimationFrame(renderBatch);
+                        } else {
+                            this.vlRenderTask = null;
+                        }
+                    };
+
+                    renderBatch();
                 }
             });
+        },
+
+        createVillageCard: function (v) {
+            const vName = v.village || 'Unknown';
+            const card = document.createElement('div');
+            card.className = 'village-card';
+            this.bindCardEvents(card, () => this.showVillageLedger(vName));
+
+            const expLabel = document.createElement('div');
+            expLabel.className = 'outstanding-label';
+            expLabel.textContent = 'Village Exposure';
+
+            const expVal = document.createElement('div');
+            expVal.className = 'outstanding-value';
+            expVal.textContent = `₹ ${this.formatMoney(v.outstanding)}`;
+
+            const name = document.createElement('div');
+            name.className = 'customer-name';
+            name.textContent = `गांव: ${vName}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'customer-meta';
+            const span = document.createElement('span');
+            span.textContent = `👥 ${v.customer_count} Active Customers`;
+            meta.appendChild(span);
+
+            card.appendChild(expLabel);
+            card.appendChild(expVal);
+            card.appendChild(name);
+            card.appendChild(meta);
+
+            return card;
         },
 
         loadVillageData: function (village) {
@@ -2407,72 +2618,171 @@
         },
 
         renderVillageTable: function () {
-            const query = $('#village-search').val().toLowerCase();
-            const filtered = this.villageCustomers.filter(c =>
+            if (this.vlRenderTask) {
+                cancelAnimationFrame(this.vlRenderTask);
+                this.vlRenderTask = null;
+            }
+
+            const query = document.getElementById('village-search').value.toLowerCase();
+            const sortVal = document.getElementById('vl-sort').value;
+            let filtered = this.villageCustomers.filter(c =>
                 (c.customer_name || c.name).toLowerCase().includes(query) ||
                 (c.reference_name || '').toLowerCase().includes(query)
             );
 
-            if (window.innerWidth <= 768) {
-                const content = $('#vl-list-content');
-                content.empty();
-
-                let mHtml = '';
-                filtered.forEach(c => {
-                    const status = c.outstanding > 0 ? 'ACTIVE' : 'SETTLED';
-                    const statusClass = status.toLowerCase();
-
-                    mHtml += `
-                        <div class="cl-card" onclick="app.showCustomer('${c.name}')">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.customer_name || c.name}</div>
-                                    <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 1px;">${c.reference_name ? `${c.reference_name}` : 'No Reference'}</div>
-                                </div>
-                                <span class="status-chip status-${statusClass}">${status}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                                <div style="flex: 1;">
-                                    <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
-                                    <div style="font-size: 0.7rem; opacity: 0.5;">Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
-                                    <span class="material-symbols-outlined" style="font-size: 1.2rem; opacity: 0.4;">chevron_right</span>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                
-                if (filtered.length === 0) {
-                    content.html('<div class="text-center p-4 opacity-50">No customers matching search.</div>');
-                } else {
-                    content.html(mHtml);
+            // Apply Sorting
+            const [field, direction] = sortVal.split('|');
+            filtered.sort((a, b) => {
+                let valA = a[field] || 0, valB = b[field] || 0;
+                if (field === 'customer_name') {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                    return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                 }
-            } else {
-                const tbody = $('#village-table tbody');
-                tbody.empty();
+                return direction === 'asc' ? valA - valB : valB - valA;
+            });
+            const isMobile = window.innerWidth <= 768;
+            const container = isMobile ? document.getElementById('vl-list-content') : document.querySelector('#village-table tbody');
 
-                filtered.forEach(c => {
-                    const paid = c.total_borrowed - c.outstanding;
-                    const pct = c.total_borrowed > 0 ? Math.round((paid / c.total_borrowed) * 100) : 0;
-                    const pctColor = pct > 70 ? '#2ecc71' : (pct > 30 ? '#f1c40f' : '#e74c3c');
+            if (!container) return;
 
-                    tbody.append(`
-                        <tr onclick="app.showCustomer('${c.name}')">
-                            <td><b>${c.customer_name || c.name}</b></td>
-                            <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
-                            <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
-                            <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                            <td style="opacity: 0.7; font-size: 0.85rem;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
-                        </tr>
-                    `);
-                });
+            // Clear previous
+            while (container.firstChild) container.removeChild(container.firstChild);
 
-                if (filtered.length === 0) {
-                    tbody.append('<tr><td colspan="5" class="text-center p-4 opacity-50">No customers found in this village matching your search.</td></tr>');
-                }
+            if (filtered.length === 0) {
+                container.innerHTML = isMobile ? '<div class="text-center p-4 opacity-50">No customers matching search.</div>' : '<tr><td colspan="6" class="text-center p-4 opacity-50">No customers matching search.</td></tr>';
+                return;
             }
+
+            let index = 0;
+            const batchSize = isMobile ? 15 : 25;
+
+            const renderBatch = () => {
+                const fragment = document.createDocumentFragment();
+                const end = Math.min(index + batchSize, filtered.length);
+
+                for (; index < end; index++) {
+                    const c = filtered[index];
+                    const element = isMobile ? this.createVillageCustomerCard(c) : this.createVillageCustomerRow(c);
+                    fragment.appendChild(element);
+                }
+
+                container.appendChild(fragment);
+
+                if (index < filtered.length) {
+                    this.vlRenderTask = requestAnimationFrame(renderBatch);
+                } else {
+                    this.vlRenderTask = null;
+                }
+            };
+
+            renderBatch();
+        },
+
+        createVillageCustomerCard: function (c) {
+            const card = document.createElement('div');
+            card.className = 'cl-card';
+            this.bindCardEvents(card, () => this.showCustomer(c.name));
+
+            const status = c.outstanding > 0 ? 'ACTIVE' : 'SETTLED';
+            const statusClass = status.toLowerCase();
+
+            // Header
+            const header = document.createElement('div');
+            header.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;';
+
+            const info = document.createElement('div');
+            info.style.cssText = 'flex: 1; min-width: 0;';
+            const name = document.createElement('div');
+            name.style.cssText = 'font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+            name.textContent = c.customer_name || c.name;
+            const ref = document.createElement('div');
+            ref.style.cssText = 'font-size: 0.75rem; opacity: 0.6; margin-top: 1px;';
+            ref.textContent = c.reference_name ? `${c.reference_name}` : '-';
+            info.appendChild(name);
+            info.appendChild(ref);
+
+            const chip = document.createElement('span');
+            chip.className = `status-chip status-${statusClass}`;
+            chip.textContent = status;
+
+            header.appendChild(info);
+            header.appendChild(chip);
+
+            // Footer
+            const footer = document.createElement('div');
+            footer.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-end;';
+
+            const stats = document.createElement('div');
+            stats.style.flex = '1';
+            const last = document.createElement('div');
+            last.style.cssText = 'font-size: 0.7rem; opacity: 0.6;';
+            last.textContent = `Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}`;
+            const borrowed = document.createElement('div');
+            borrowed.style.cssText = 'font-size: 0.7rem; opacity: 0.5;';
+            borrowed.textContent = `Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}`;
+            stats.appendChild(last);
+            stats.appendChild(borrowed);
+
+            const balance = document.createElement('div');
+            balance.style.textAlign = 'right';
+            const amt = document.createElement('div');
+            amt.style.cssText = 'font-size: 1.2rem; font-weight: 900; color: #ff6b6b;';
+            amt.textContent = `₹ ${this.formatMoney(c.outstanding)}`;
+            const icon = document.createElement('span');
+            icon.className = 'material-symbols-outlined';
+            icon.style.cssText = 'font-size: 1.2rem; opacity: 0.4;';
+            icon.textContent = 'chevron_right';
+            balance.appendChild(amt);
+            balance.appendChild(icon);
+
+            footer.appendChild(stats);
+            footer.appendChild(balance);
+
+            card.appendChild(header);
+            card.appendChild(footer);
+
+            return card;
+        },
+
+        createVillageCustomerRow: function (c) {
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            this.bindCardEvents(tr, () => this.showCustomer(c.name));
+
+            const tdName = document.createElement('td');
+            const bName = document.createElement('b');
+            bName.textContent = c.customer_name;
+            tdName.appendChild(bName);
+
+            const tdRef = document.createElement('td');
+            const sRef = document.createElement('span');
+            sRef.style.opacity = '0.8';
+            sRef.textContent = c.reference_name ? `(${c.reference_name})` : '';
+            tdRef.appendChild(sRef);
+
+            const tdVillage = document.createElement('td');
+            tdVillage.textContent = c.village || '-';
+
+            const tdAmt = document.createElement('td');
+            tdAmt.style.cssText = 'color: #ff6b6b; font-weight: 700;';
+            tdAmt.textContent = `₹ ${this.formatMoney(c.outstanding)}`;
+
+            const tdBorrowed = document.createElement('td');
+            tdBorrowed.textContent = `₹ ${this.formatMoney(c.total_borrowed)}`;
+
+            const tdLast = document.createElement('td');
+            tdLast.style.opacity = '0.7';
+            tdLast.textContent = c.last_payment ? this.formatDate(c.last_payment) : 'Never';
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdRef);
+            tr.appendChild(tdVillage);
+            tr.appendChild(tdAmt);
+            tr.appendChild(tdBorrowed);
+            tr.appendChild(tdLast);
+
+            return tr;
         },
 
         /* ================= CUSTOMER LIST ================= */
@@ -2525,7 +2835,7 @@
 
             const isMobile = window.innerWidth <= 768;
             const container = isMobile ? document.getElementById('cl-list-content') : document.querySelector('#cl-table tbody');
-            
+
             if (!container) return;
 
             // Efficient clearing of previous results
@@ -2565,7 +2875,7 @@
         createCustomerCard: function (c) {
             const card = document.createElement('div');
             card.className = 'cl-card';
-            card.addEventListener('pointerdown', () => this.showCustomer(c.name));
+            this.bindCardEvents(card, () => this.showCustomer(c.name));
 
             const status = c.outstanding > 0 ? (c.days_overdue > 30 ? 'OVERDUE' : 'ACTIVE') : 'SETTLED';
             const statusClass = status.toLowerCase();
@@ -2573,14 +2883,14 @@
             // Header row
             const header = document.createElement('div');
             header.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;';
-            
+
             const info = document.createElement('div');
             info.style.cssText = 'flex: 1; min-width: 0;';
-            
+
             const name = document.createElement('div');
             name.style.cssText = 'font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
             name.textContent = c.customer_name;
-            
+
             const meta = document.createElement('div');
             meta.style.cssText = 'font-size: 0.75rem; opacity: 0.6; margin-top: 1px;';
             meta.innerHTML = `${c.reference_name ? `${c.reference_name} • ` : ''}<b>${c.village || 'Unknown Village'}</b>`;
@@ -2639,7 +2949,7 @@
 
         createCustomerRow: function (c) {
             const tr = document.createElement('tr');
-            tr.addEventListener('pointerdown', () => this.showCustomer(c.name));
+            this.bindCardEvents(tr, () => this.showCustomer(c.name));
 
             const tdName = document.createElement('td');
             const bName = document.createElement('b');
@@ -2712,7 +3022,7 @@
                 // If user didn't include the old number in their edit, we append it
                 const oldParts = oldMobile.split(',').map(s => s.trim()).filter(Boolean);
                 const newParts = newMobile.split(',').map(s => s.trim()).filter(Boolean);
-                
+
                 // Merge without duplicates
                 const combined = [...new Set([...oldParts, ...newParts])];
                 data.mobile_no = combined.join(', ');
