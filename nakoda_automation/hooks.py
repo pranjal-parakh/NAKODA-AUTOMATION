@@ -4,6 +4,7 @@ app_publisher = "Nakoda"
 app_description = "Jewelry Automation"
 app_email = "admin@nakoda.local"
 app_license = "mit"
+login_redirect_url = "/nakoda"
 
 fixtures = [
     "Custom Field",
@@ -62,7 +63,7 @@ fixtures = [
 # ----------
 
 # application home page (will override Website Settings)
-# home_page = "login"
+home_page = "nakoda"
 
 # website user home page (by Role)
 # role_home_page = {

@@ -310,31 +310,33 @@
 
     @media (max-width: 768px) {
         .glass-card {
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border: 1px solid var(--border-main) !important;
+            background: var(--bg-card) !important;
         }
 
         .btn-glass {
             backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+            transform: none !important;
         }
 
-        .glass-card:hover {
+        .glass-card:hover, .btn-glass:hover, .village-card:hover, .customer-card:hover {
             transform: none !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
         }
 
         .timeline-content {
             backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             background: var(--bg-card) !important;
             border: none !important;
             border-bottom: 1px solid var(--border-light) !important;
             box-shadow: none !important;
             border-radius: 0 !important;
-        }
-
-        .virtual-item {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            will-change: transform;
         }
 
         .cl-card {
@@ -356,6 +358,16 @@
         .status-overdue { background: #ba1a20; color: white; }
         .status-active { background: #1b6d24; color: white; }
         .status-settled { background: #444; color: #ccc; }
+
+        /* Sticky Header for Mobile - REMOVED sticky as requested */
+        .mobile-sticky-header {
+            z-index: 90;
+            background: var(--bg-card) !important;
+            padding: 15px;
+            margin-bottom: 15px !important;
+            border-radius: 20px !important;
+            border: 1px solid var(--border-main) !important;
+        }
     }
 
     /* Tables */
@@ -1324,19 +1336,28 @@
                 <h3 style="margin: 0; font-weight: 800;" id="vl-table-title">Customer Data</h3>
                 <button class="btn-glass btn-sm" onclick="app.showVillageLedger()">✖ Clear Selection</button>
             </div>
-            <div class="table-scroll-wrapper">
-                <table class="dashboard-table" id="village-table">
-                    <thead>
-                        <tr>
-                            <th>Customer Name</th>
-                            <th>Reference</th>
-                            <th>Outstanding</th>
-                            <th>Total Borrowed</th>
-                            <th>Last Payment</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            
+            <!-- Mobile View: Card List -->
+            <div class="mobile-only" id="vl-list-mobile">
+                <div id="vl-list-content"></div>
+            </div>
+
+            <!-- Desktop View: Standard Table -->
+            <div class="desktop-only">
+                <div class="table-scroll-wrapper">
+                    <table class="dashboard-table" id="village-table">
+                        <thead>
+                            <tr>
+                                <th>Customer Name</th>
+                                <th>Reference</th>
+                                <th>Outstanding</th>
+                                <th>Total Borrowed</th>
+                                <th>Last Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -1368,7 +1389,7 @@
         </div>
 
         <!-- CONTROL PANEL -->
-        <div class="glass-card mb-4">
+        <div class="glass-card mb-4 mobile-sticky-header">
             <div class="row align-items-center">
                 <div class="col-md-3">
                     <div class="metric-label mb-2">Search Village</div>
@@ -1399,9 +1420,8 @@
         <!-- MAIN LIST -->
         <div id="overdue-list-container">
             <!-- Mobile View -->
-            <div class="mobile-only" id="ov-list-mobile" style="position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; height: 70vh;">
-                <div id="ov-list-spacer" style="width: 100%; position: absolute; top: 0; left: 0; pointer-events: none;"></div>
-                <div id="ov-list-content" style="width: 100%; position: absolute; top: 0; left: 0;"></div>
+            <div class="mobile-only" id="ov-list-mobile">
+                <div id="ov-list-content"></div>
             </div>
 
             <!-- Desktop View -->
@@ -1439,7 +1459,7 @@
         </div>
 
         <!-- CONTROL PANEL -->
-        <div class="glass-card mb-4">
+        <div class="glass-card mb-4 mobile-sticky-header">
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="metric-label mb-2">Search Customer</div>
@@ -1460,10 +1480,9 @@
         </div>
 
         <div id="cl-list-container">
-            <!-- Mobile View: Virtual Scroll -->
-            <div class="mobile-only" id="cl-list-mobile" style="position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; height: 75vh;">
-                <div id="cl-list-spacer" style="width: 100%; position: absolute; top: 0; left: 0; pointer-events: none;"></div>
-                <div id="cl-list-content" style="width: 100%; position: absolute; top: 0; left: 0;"></div>
+            <!-- Mobile View -->
+            <div class="mobile-only" id="cl-list-mobile">
+                <div id="cl-list-content"></div>
             </div>
 
             <!-- Desktop View: Standard Table -->
@@ -1575,15 +1594,7 @@
                 this.clTimer = setTimeout(() => this.renderCLData(), 300);
             });
 
-            // CL Virtual Scroll Binding
-            const clViewport = document.getElementById('cl-list-mobile');
-            if (clViewport) {
-                clViewport.addEventListener('scroll', () => {
-                    if (this.currentView === 'customers' && window.innerWidth <= 768) {
-                        this.updateCLVirtualScroll();
-                    }
-                }, { passive: true });
-            }
+            // CL Virtual Scroll Binding removed for native scrolling
 
             document.getElementById('village-search').addEventListener('input', (e) => {
                 if (this.currentVillage) {
@@ -1605,15 +1616,7 @@
                 }
             });
 
-            // Virtual Scroll Binding
-            const ovViewport = document.getElementById('ov-list-mobile');
-            if (ovViewport) {
-                ovViewport.addEventListener('scroll', () => {
-                    if (this.currentView === 'overdue' && window.innerWidth <= 768) {
-                        this.updateVirtualScroll();
-                    }
-                }, { passive: true });
-            }
+            // Virtual Scroll Binding removed for native scrolling
         },
 
         switchView: function (viewId, stateObj = null) {
@@ -1737,16 +1740,28 @@
             const isMobile = window.innerWidth <= 768;
 
             if (isMobile) {
-                const spacer = $('#ov-list-spacer');
                 const content = $('#ov-list-content');
-                const viewport = $('#ov-list-mobile');
-                
                 content.empty();
-                spacer.css('height', (this.ovFiltered.length * this.ovRowHeight) + 'px');
-                viewport.scrollTop(0);
-                // Ensure we get a valid height even if hidden
-                this.ovViewportHeight = viewport.height() || window.innerHeight * 0.7;
-                this.updateVirtualScroll();
+                
+                let mHtml = '';
+                this.ovFiltered.forEach(d => {
+                    const days = d.days_overdue;
+                    const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
+                    mHtml += `
+                        <div class="cl-card" onclick="app.showCustomer('${d.customer}')" style="margin-bottom: 0;">
+                            <div class="timeline-content ${oc}" style="display:flex; align-items:center; padding: 12px 16px; gap:16px; border-radius: 0 !important; border: none !important; border-bottom: 1px solid var(--border-light) !important;">
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
+                                    <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;"><b>${d.village || 'Unknown'}</b> • <span class="text-red font-bold">${days}d</span></div>
+                                </div>
+                                <div style="flex-shrink:0; text-align:right;">
+                                    <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
+                                    <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                content.html(mHtml);
             } else {
                 const dContainer = $('#ov-table-desktop tbody');
                 dContainer.empty();
@@ -1767,41 +1782,7 @@
             }
         },
 
-        updateVirtualScroll: function () {
-            const viewport = document.getElementById('ov-list-mobile');
-            const content = $('#ov-list-content');
-            if (!viewport || !this.ovFiltered.length) return;
-
-            const scrollTop = viewport.scrollTop;
-            const startIdx = Math.max(0, Math.floor(scrollTop / this.ovRowHeight) - 2);
-            const endIdx = Math.min(this.ovFiltered.length - 1, Math.ceil((scrollTop + this.ovViewportHeight) / this.ovRowHeight) + 2);
-
-            const mFrag = document.createDocumentFragment();
-            for (let i = startIdx; i <= endIdx; i++) {
-                const d = this.ovFiltered[i];
-                const days = d.days_overdue;
-                const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
-                
-                const item = document.createElement('div');
-                item.className = 'virtual-item';
-                item.style.transform = `translateY(${i * this.ovRowHeight}px)`;
-                item.style.height = this.ovRowHeight + 'px';
-                item.onclick = () => app.showCustomer(d.customer);
-                item.innerHTML = `
-                    <div class="timeline-content ${oc}" style="height:100%; display:flex; align-items:center; padding: 0 16px; gap:16px;">
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
-                            <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;">${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d</span></div>
-                        </div>
-                        <div style="flex-shrink:0; text-align:right;">
-                            <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
-                            <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
-                        </div>
-                    </div>`;
-                mFrag.appendChild(item);
-            }
-            content.html(mFrag);
-        },
+        // updateVirtualScroll removed for native scrolling
 
         loadCharts: function () {
             frappe.call({
@@ -2301,54 +2282,70 @@
 
         renderVillageTable: function () {
             const query = $('#village-search').val().toLowerCase();
-            const tbody = $('#village-table tbody');
-            tbody.empty();
-
             const filtered = this.villageCustomers.filter(c =>
                 (c.customer_name || c.name).toLowerCase().includes(query) ||
                 (c.reference_name || '').toLowerCase().includes(query)
             );
 
-            // Update header for improved visibility
-            $('#village-table thead').html(`
-                <tr>
-                    <th>Customer Name</th>
-                    <th>Reference</th>
-                    <th>Current Outstanding</th>
-                    <th>Total Borrowed</th>
-                    <th>Total Paid</th>
-                    <th>Recovery %</th>
-                    <th>Last Payment</th>
-                </tr>
-            `);
+            if (window.innerWidth <= 768) {
+                const content = $('#vl-list-content');
+                content.empty();
 
-            filtered.forEach(c => {
-                const paid = c.total_borrowed - c.outstanding;
-                const pct = c.total_borrowed > 0 ? Math.round((paid / c.total_borrowed) * 100) : 0;
-                const pctColor = pct > 70 ? '#2ecc71' : (pct > 30 ? '#f1c40f' : '#e74c3c');
+                let mHtml = '';
+                filtered.forEach(c => {
+                    const status = c.outstanding > 0 ? 'ACTIVE' : 'SETTLED';
+                    const statusClass = status.toLowerCase();
 
-                tbody.append(`
-                    <tr onclick="app.showCustomer('${c.name}')">
-                        <td><b>${c.customer_name || c.name}</b></td>
-                        <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
-                        <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
-                        <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
-                        <td style="color: #2ecc71; font-weight: 600;">₹ ${this.formatMoney(paid)}</td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; min-width: 60px;">
-                                    <div style="width: ${pct}%; height: 100%; background: ${pctColor};"></div>
+                    mHtml += `
+                        <div class="cl-card" onclick="app.showCustomer('${c.name}')">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.customer_name || c.name}</div>
+                                    <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 1px;">${c.reference_name ? `${c.reference_name}` : 'No Reference'}</div>
                                 </div>
-                                <span style="font-weight: 700; font-size: 0.8rem; color: ${pctColor};">${pct}%</span>
+                                <span class="status-chip status-${statusClass}">${status}</span>
                             </div>
-                        </td>
-                        <td style="opacity: 0.7; font-size: 0.85rem;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
-                    </tr>
-                `);
-            });
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.5;">Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
+                                    <span class="material-symbols-outlined" style="font-size: 1.2rem; opacity: 0.4;">chevron_right</span>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                
+                if (filtered.length === 0) {
+                    content.html('<div class="text-center p-4 opacity-50">No customers matching search.</div>');
+                } else {
+                    content.html(mHtml);
+                }
+            } else {
+                const tbody = $('#village-table tbody');
+                tbody.empty();
 
-            if (filtered.length === 0) {
-                tbody.append('<tr><td colspan="7" class="text-center p-4 opacity-50">No customers found in this village matching your search.</td></tr>');
+                filtered.forEach(c => {
+                    const paid = c.total_borrowed - c.outstanding;
+                    const pct = c.total_borrowed > 0 ? Math.round((paid / c.total_borrowed) * 100) : 0;
+                    const pctColor = pct > 70 ? '#2ecc71' : (pct > 30 ? '#f1c40f' : '#e74c3c');
+
+                    tbody.append(`
+                        <tr onclick="app.showCustomer('${c.name}')">
+                            <td><b>${c.customer_name || c.name}</b></td>
+                            <td><span style="opacity: 0.8;">${c.reference_name ? `(${c.reference_name})` : ''}</span></td>
+                            <td style="color: #ff6b6b; font-weight: 800;">₹ ${this.formatMoney(c.outstanding)}</td>
+                            <td>₹ ${this.formatMoney(c.total_borrowed)}</td>
+                            <td style="opacity: 0.7; font-size: 0.85rem;">${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</td>
+                        </tr>
+                    `);
+                });
+
+                if (filtered.length === 0) {
+                    tbody.append('<tr><td colspan="5" class="text-center p-4 opacity-50">No customers found in this village matching your search.</td></tr>');
+                }
             }
         },
 
@@ -2395,15 +2392,36 @@
             });
 
             if (window.innerWidth <= 768) {
-                const spacer = $('#cl-list-spacer');
                 const content = $('#cl-list-content');
-                const viewport = $('#cl-list-mobile');
-                
                 content.empty();
-                spacer.css('height', (this.clFiltered.length * this.clRowHeight) + 'px');
-                viewport.scrollTop(0);
-                this.clViewportHeight = viewport.height() || window.innerHeight * 0.75;
-                this.updateCLVirtualScroll();
+
+                let mHtml = '';
+                this.clFiltered.forEach(c => {
+                    const status = c.outstanding > 0 ? (c.days_overdue > 30 ? 'OVERDUE' : 'ACTIVE') : 'SETTLED';
+                    const statusClass = status.toLowerCase();
+
+                    mHtml += `
+                        <div class="cl-card" onclick="app.showCustomer('${c.name}')">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.customer_name}</div>
+                                    <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 1px;">${c.reference_name ? `${c.reference_name} • ` : ''}<b>${c.village || 'Unknown Village'}</b></div>
+                                </div>
+                                <span class="status-chip status-${statusClass}">${status}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.5;">Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
+                                    <span class="material-symbols-outlined" style="font-size: 1.2rem; opacity: 0.4;">chevron_right</span>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                content.html(mHtml);
             } else {
                 const tbody = $('#cl-table tbody');
                 tbody.empty();
@@ -2422,49 +2440,7 @@
             }
         },
 
-        updateCLVirtualScroll: function () {
-            const viewport = document.getElementById('cl-list-mobile');
-            const content = $('#cl-list-content');
-            if (!viewport || !this.clFiltered.length) return;
-
-            const scrollTop = viewport.scrollTop;
-            const startIdx = Math.max(0, Math.floor(scrollTop / this.clRowHeight) - 2);
-            const endIdx = Math.min(this.clFiltered.length - 1, Math.ceil((scrollTop + this.clViewportHeight) / this.clRowHeight) + 2);
-
-            const mFrag = document.createDocumentFragment();
-            for (let i = startIdx; i <= endIdx; i++) {
-                const c = this.clFiltered[i];
-                const status = c.outstanding > 0 ? (c.days_overdue > 30 ? 'OVERDUE' : 'ACTIVE') : 'SETTLED';
-                const statusClass = status.toLowerCase();
-
-                const item = document.createElement('div');
-                item.className = 'virtual-item cl-card';
-                item.style.transform = `translateY(${i * this.clRowHeight}px)`;
-                item.style.height = this.clRowHeight + 'px';
-                item.onclick = () => app.showCustomer(c.name);
-                item.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.customer_name}</div>
-                            <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 1px;">${c.reference_name ? `${c.reference_name} • ` : ''}${c.village || 'Unknown Village'}</div>
-                        </div>
-                        <span class="status-chip status-${statusClass}">${status}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                        <div style="flex: 1;">
-                            <div style="font-size: 0.7rem; opacity: 0.6;">Last: ${c.last_payment ? this.formatDate(c.last_payment) : 'Never'}</div>
-                            <div style="font-size: 0.7rem; opacity: 0.5;">Borrowed: ₹ ${this.formatMoney(c.total_borrowed)}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 1.2rem; font-weight: 900; color: #ff6b6b;">₹ ${this.formatMoney(c.outstanding)}</div>
-                            <span class="material-symbols-outlined" style="font-size: 1.2rem; opacity: 0.4;">chevron_right</span>
-                        </div>
-                    </div>
-                `;
-                mFrag.appendChild(item);
-            }
-            content.html(mFrag);
-        }
+        // updateCLVirtualScroll removed for native scrolling
     };
 
     frappe.ready(() => app.init());
