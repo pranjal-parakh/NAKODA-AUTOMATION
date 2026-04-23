@@ -308,6 +308,24 @@
         background: #e74c3c;
     }
 
+    @media (max-width: 768px) {
+        .glass-card {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+        }
+
+        .btn-glass {
+            backdrop-filter: none !important;
+        }
+
+        .glass-card:hover {
+            transform: none !important;
+        }
+
+        .timeline-content {
+            backdrop-filter: none !important;
+        }
+    }
+
     /* Tables */
     .dashboard-table {
         width: 100%;
@@ -1433,6 +1451,9 @@
         fullLedger: [],
         currentCustomer: null,
         currentVillage: null,
+        overdueData: [],
+        overdueTimer: null,
+        renderQueue: [],
         fullInvoices: [],
         recentStart: 0,
         init: function () {
@@ -1536,10 +1557,13 @@
                 history.pushState(stateObj, '');
             }
 
-            // Overdue Filters
-            $('#ov-village-search').on('input', () => this.renderOverdueList());
-            $('#ov-sort').on('change', () => this.renderOverdueList());
-            $(document).on('click', '.ov-age-btn', (e) => {
+            // Overdue Filters (Debounced)
+            $('#ov-village-search').off('input').on('input', () => {
+                if (this.overdueTimer) clearTimeout(this.overdueTimer);
+                this.overdueTimer = setTimeout(() => this.renderOverdueList(), 300);
+            });
+            $('#ov-sort').off('change').on('change', () => this.renderOverdueList());
+            $(document).off('click', '.ov-age-btn').on('click', '.ov-age-btn', (e) => {
                 $('.ov-age-btn').removeClass('active');
                 $(e.currentTarget).addClass('active');
                 this.renderOverdueList();
@@ -1608,82 +1632,94 @@
         },
 
         renderOverdueList: function () {
-            const container = $('#overdue-list-container');
+            // Pre-render state
             const villageQ = $('#ov-village-search').val().toLowerCase();
             const sortVal = $('#ov-sort').val();
             const ageQ = parseInt($('.ov-age-btn.active').data('days')) || 0;
 
+            // 1. Precompute Filters & Sort (Read once)
             let filtered = (this.overdueData || []).filter(d => {
-                const matchesVillage = (d.village || '').toLowerCase().includes(villageQ);
-                const matchesAge = d.days_overdue >= ageQ;
-                return matchesVillage && matchesAge;
+                return (d.village || '').toLowerCase().includes(villageQ) && d.days_overdue >= ageQ;
             });
 
-            // Sorting
             const [field, order] = sortVal.split('|');
             filtered.sort((a, b) => {
-                let valA = a[field] || 0;
-                let valB = b[field] || 0;
+                const valA = a[field] || 0, valB = b[field] || 0;
                 return order === 'desc' ? valB - valA : valA - valB;
             });
 
-            // Update header stats
+            // 2. Update stats (Write once)
             let totalAmt = 0;
-            filtered.forEach(d => totalAmt += (d.outstanding || 0));
+            for (let i = 0; i < filtered.length; i++) totalAmt += (filtered[i].outstanding || 0);
             $('#ov-total-amount').text('₹ ' + this.formatMoney(totalAmt));
             $('#ov-total-count').text(filtered.length);
 
+            const mContainer = $('#ov-list-mobile');
+            const dContainer = $('#ov-table-desktop tbody');
+
             if (filtered.length === 0) {
-                const emptyHtml = '<div class="glass-card text-center p-5 opacity-50">No overdue invoices found for current filters.</div>';
-                $('#ov-list-mobile').html(emptyHtml);
-                $('#ov-table-desktop tbody').html('<tr><td colspan="5" class="text-center p-5 opacity-50">No overdue invoices found.</td></tr>');
+                mContainer.html('<div class="glass-card text-center p-5 opacity-50">No results found.</div>');
+                dContainer.html('<tr><td colspan="5" class="text-center p-5 opacity-50">No results found.</td></tr>');
                 return;
             }
 
-            let mobileHtml = '';
-            let desktopHtml = '';
+            // 3. Batch Rendering Management
+            if (this.renderTask) cancelAnimationFrame(this.renderTask);
+            mContainer.empty();
+            dContainer.empty();
 
-            filtered.forEach(d => {
-                let oc = '';
-                const days = d.days_overdue;
-                if (days > 90) oc = 'overdue-high';
-                else if (days > 60) oc = 'overdue-mid';
-                else if (days > 30) oc = 'overdue-low';
+            const isMobile = window.innerWidth <= 768;
+            const batchSize = isMobile ? 25 : 100;
+            let index = 0;
 
-                // Mobile Card (Amount on left)
-                mobileHtml += `
-                    <div class="timeline-item">
-                        <div class="timeline-content ${oc}" style="margin-bottom: 12px; cursor: pointer;" onclick="app.showCustomer('${d.customer}')">
-                            <div class="d-flex align-items-center gap-4">
-                                <div style="flex-shrink: 0; min-width: 100px;">
-                                    <div style="font-weight: 900; color: #ff6b6b; font-size: 1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
-                                    <div style="font-size: 0.7rem; opacity: 0.6;">Due: ${this.formatDate(d.due_date)}</div>
+            const renderBatch = () => {
+                const limit = Math.min(index + batchSize, filtered.length);
+                const mFrag = document.createDocumentFragment();
+                let dHtml = '';
+
+                for (; index < limit; index++) {
+                    const d = filtered[index];
+                    const days = d.days_overdue;
+                    const oc = days > 90 ? 'overdue-high' : (days > 60 ? 'overdue-mid' : (days > 30 ? 'overdue-low' : ''));
+
+                    if (isMobile) {
+                        const item = document.createElement('div');
+                        item.className = 'timeline-item';
+                        item.onclick = () => app.showCustomer(d.customer);
+                        item.innerHTML = `
+                            <div class="timeline-content ${oc}" style="margin-bottom:12px; display:flex; align-items:center; gap:16px;">
+                                <div style="flex-shrink:0; width:100px;">
+                                    <div style="font-weight:900; color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</div>
+                                    <div style="font-size:0.7rem; opacity:0.6;">Due: ${this.formatDate(d.due_date)}</div>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <div style="font-weight: 800; font-size: 1rem; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.customer_name}</div>
-                                    <div style="font-size: 0.8rem; opacity: 0.7; margin-top: 2px;">
-                                        ${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d Overdue</span>
-                                    </div>
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-weight:800; font-size:1rem; color:var(--text-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${d.customer_name}</div>
+                                    <div style="font-size:0.8rem; opacity:0.7; margin-top:2px;">${d.village || 'Unknown'} • <span class="text-red font-bold">${days}d</span></div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                            </div>`;
+                        mFrag.appendChild(item);
+                    } else {
+                        dHtml += `
+                            <tr class="row-item" onclick="app.showCustomer('${d.customer}')" style="cursor: pointer;">
+                                <td><div class="d-flex align-items-center"><div class="overdue-indicator ${oc}"></div><b>${d.customer_name}</b></div></td>
+                                <td>${d.village || '—'}</td>
+                                <td>${this.formatDate(d.due_date)}</td>
+                                <td class="text-center"><span class="text-red font-bold">${days} Days</span></td>
+                                <td class="text-right font-black" style="color:#ff6b6b; font-size:1.1rem;">₹ ${this.formatMoney(d.outstanding)}</td>
+                            </tr>`;
+                    }
+                }
 
-                // Desktop Table Row
-                desktopHtml += `
-                    <tr class="row-item" onclick="app.showCustomer('${d.customer}')" style="cursor: pointer;">
-                        <td><div class="d-flex align-items-center"><div class="overdue-indicator ${oc}"></div><b>${d.customer_name}</b></div></td>
-                        <td>${d.village || '—'}</td>
-                        <td>${this.formatDate(d.due_date)}</td>
-                        <td class="text-center"><span class="text-red font-bold">${days} Days</span></td>
-                        <td class="text-right font-black" style="color: #ff6b6b; font-size: 1.1rem;">₹ ${this.formatMoney(d.outstanding)}</td>
-                    </tr>
-                `;
-            });
+                if (isMobile) mContainer.append(mFrag);
+                else dContainer.append(dHtml);
 
-            $('#ov-list-mobile').html(mobileHtml);
-            $('#ov-table-desktop tbody').html(desktopHtml);
+                if (index < filtered.length) {
+                    this.renderTask = requestAnimationFrame(renderBatch);
+                }
+            };
+
+            // Start initial render batch
+            renderBatch();
         },
 
         loadCharts: function () {
